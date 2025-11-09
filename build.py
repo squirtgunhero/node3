@@ -32,6 +32,7 @@ def build_executable():
         '--onefile',
         '--console',  # Show console for logging (change to --windowed for release)
         '--add-data=templates:templates',
+        '--additional-hooks-dir=.',  # Use our custom hooks to override torch
         # Essential hidden imports only
         '--hidden-import=uvicorn',
         '--hidden-import=fastapi',
