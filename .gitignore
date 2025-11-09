@@ -42,3 +42,4 @@ build/
 *.msi
 *.AppImage
 
+marketplace_wallet.json

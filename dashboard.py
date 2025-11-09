@@ -40,6 +40,13 @@ class Dashboard:
             return templates.TemplateResponse("index.html", {
                 "request": request
             })
+        
+        @app.get("/marketplace", response_class=HTMLResponse)
+        async def marketplace(request: Request):
+            """Marketplace browsing page"""
+            return templates.TemplateResponse("marketplace.html", {
+                "request": request
+            })
             
         @app.get("/api/status")
         async def get_status():
@@ -134,6 +141,51 @@ class Dashboard:
             """Stop the agent"""
             self.job_manager.stop()
             return {'status': 'stopped'}
+        
+        @app.get("/api/marketplace/jobs")
+        async def get_marketplace_jobs():
+            """Get available marketplace jobs"""
+            import httpx
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.job_manager.marketplace_url}/api/jobs/available",
+                        json={
+                            'gpu_model': self.job_manager.gpu_info['name'],
+                            'gpu_vendor': self.job_manager.gpu_info.get('vendor', 'unknown'),
+                            'gpu_memory': self.job_manager.gpu_info['total_memory'],
+                            'max_concurrent_jobs': 1
+                        },
+                        headers={'X-API-Key': self.job_manager.api_key} if self.job_manager.api_key else {},
+                        timeout=5.0
+                    )
+                    
+                    if response.status_code == 200:
+                        return response.json()
+                    else:
+                        return {'jobs': []}
+            except Exception as e:
+                logger.error(f"Error fetching marketplace jobs: {e}")
+                return {'jobs': []}
+        
+        @app.get("/api/marketplace/agents")
+        async def get_marketplace_agents():
+            """Get available compute agents in marketplace"""
+            import httpx
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        f"{self.job_manager.marketplace_url}/api/marketplace/agents",
+                        timeout=5.0
+                    )
+                    
+                    if response.status_code == 200:
+                        return response.json()
+                    else:
+                        return {'agents': []}
+            except Exception as e:
+                logger.error(f"Error fetching marketplace agents: {e}")
+                return {'agents': []}
             
         @app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket):

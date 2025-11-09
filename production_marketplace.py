@@ -38,8 +38,9 @@ from sqlalchemy import Column, String, Float, Integer, DateTime, Boolean, JSON, 
 import hashlib
 import secrets
 
-# Import payment module
+# Import payment module and load balancer
 from payment_module import PaymentModule
+from load_balancer import LoadBalancer, JobPriority
 
 # ============================================================================
 # Configuration
@@ -283,8 +284,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global payment module
+# Global modules
 payment_module: Optional[PaymentModule] = None
+load_balancer: Optional[LoadBalancer] = None
 
 
 # ============================================================================
@@ -330,6 +332,39 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
 
+@app.get("/api/marketplace/agents")
+async def list_marketplace_agents(db: AsyncSession = Depends(get_db)):
+    """Public endpoint to list available compute agents"""
+    try:
+        # Query all active agents
+        result = await db.execute(
+            select(Agent).where(Agent.is_active == True)
+        )
+        agents = result.scalars().all()
+        
+        # Convert to response format
+        agent_list = []
+        for agent in agents:
+            agent_list.append({
+                'id': agent.id,
+                'gpu_model': agent.gpu_model or 'Unknown',
+                'gpu_vendor': agent.gpu_vendor or 'Unknown',
+                'gpu_memory': agent.gpu_memory or 0,
+                'compute_framework': agent.compute_capability.get('framework', 'Unknown') if agent.compute_capability else 'Unknown',
+                'status': 'available' if agent.is_active else 'offline',
+                'jobs_completed': agent.total_jobs_completed,
+                'uptime': '99%',  # TODO: Track actual uptime
+                'rate': 0.001,  # TODO: Make this configurable per agent
+                'gpu_count': 1
+            })
+        
+        return {'agents': agent_list}
+        
+    except Exception as e:
+        logger.error(f"Error listing agents: {e}")
+        return {'agents': []}
+
+
 # ============================================================================
 # Agent Endpoints
 # ============================================================================
@@ -340,6 +375,7 @@ async def register_agent(
     db: AsyncSession = Depends(get_db)
 ):
     """Register a new agent and receive API key"""
+    global load_balancer
     
     # Generate API key
     api_key = secrets.token_urlsafe(32)
@@ -357,6 +393,15 @@ async def register_agent(
     db.add(agent)
     await db.commit()
     await db.refresh(agent)
+    
+    # Register with load balancer
+    if load_balancer:
+        max_concurrent = 2  # TODO: Make configurable per agent
+        load_balancer.register_agent(
+            agent_id=agent.id,
+            gpu_memory=request.gpu_memory,
+            max_concurrent_jobs=max_concurrent
+        )
     
     logger.info(f"Registered new agent: {agent.id} ({request.gpu_model})")
     
@@ -456,6 +501,7 @@ async def complete_job(
     db: AsyncSession = Depends(get_db)
 ):
     """Agent reports job completion - triggers payment"""
+    global load_balancer
     
     # Get job
     result = await db.execute(select(Job).where(Job.id == job_id))
@@ -470,6 +516,11 @@ async def complete_job(
     if job.status not in ["accepted", "running"]:
         raise HTTPException(status_code=400, detail=f"Invalid job status: {job.status}")
     
+    # Calculate duration
+    duration = request.execution_time or 60.0
+    if job.started_at:
+        duration = (datetime.utcnow() - job.started_at).total_seconds()
+    
     # Update job
     job.status = "completed"
     job.completed_at = datetime.utcnow()
@@ -481,7 +532,16 @@ async def complete_job(
     
     await db.commit()
     
-    logger.info(f"Job {job_id} completed by agent {agent.id}")
+    # Update load balancer
+    if load_balancer:
+        load_balancer.job_completed(
+            job_id=job_id,
+            agent_id=agent.id,
+            duration=duration,
+            success=True
+        )
+    
+    logger.info(f"Job {job_id} completed by agent {agent.id} in {duration:.1f}s")
     
     # Process payment in background
     if payment_module and job.agent_wallet:
@@ -509,6 +569,7 @@ async def fail_job(
     db: AsyncSession = Depends(get_db)
 ):
     """Agent reports job failure"""
+    global load_balancer
     
     # Get job
     result = await db.execute(select(Job).where(Job.id == job_id))
@@ -532,12 +593,38 @@ async def fail_job(
     
     await db.commit()
     
-    logger.warning(f"Job {job_id} failed: {request.error_message}")
+    # Notify load balancer (will auto-retry if configured)
+    if load_balancer:
+        load_balancer.job_failed(
+            job_id=job_id,
+            agent_id=agent.id,
+            retry=True  # Auto-retry failed jobs
+        )
+    
+    logger.warning(f"Job {job_id} failed on agent {agent.id}: {request.error_message}")
     
     return {
         "status": "failed",
         "job_id": job_id,
         "message": "Job failure recorded"
+    }
+
+
+@app.post("/api/agents/heartbeat")
+async def agent_heartbeat(agent: Agent = Depends(get_current_agent)):
+    """Agent sends heartbeat to indicate it's still alive"""
+    global load_balancer
+    
+    # Update agent last seen
+    agent.last_seen = datetime.utcnow()
+    
+    # Update load balancer
+    if load_balancer:
+        load_balancer.heartbeat(agent.id)
+    
+    return {
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 
@@ -552,6 +639,7 @@ async def create_job(
     db: AsyncSession = Depends(get_db)
 ):
     """Admin: Create a new job"""
+    global load_balancer
     
     job = Job(
         job_type=request.job_type,
@@ -571,6 +659,24 @@ async def create_job(
     await db.commit()
     await db.refresh(job)
     
+    # Add to load balancer queue
+    if load_balancer:
+        # Determine priority based on reward (simple heuristic)
+        if request.reward >= 0.01:
+            priority = JobPriority.HIGH
+        elif request.reward >= 0.001:
+            priority = JobPriority.NORMAL
+        else:
+            priority = JobPriority.LOW
+        
+        load_balancer.enqueue_job(
+            job_id=job.id,
+            gpu_memory_required=request.gpu_memory_required,
+            estimated_duration=request.estimated_duration,
+            timeout=request.timeout,
+            priority=priority
+        )
+    
     logger.info(f"Admin created job: {job.id}")
     
     return {"job_id": job.id, "status": "created"}
@@ -582,6 +688,7 @@ async def get_stats(
     db: AsyncSession = Depends(get_db)
 ):
     """Admin: Get marketplace statistics"""
+    global load_balancer
     
     # Count agents
     agents_result = await db.execute(select(Agent))
@@ -600,6 +707,9 @@ async def get_stats(
     all_payments = payments_result.scalars().all()
     total_paid = sum(p.amount for p in all_payments)
     
+    # Get load balancer stats
+    lb_stats = load_balancer.get_stats() if load_balancer else {}
+    
     return {
         "agents": {
             "total": total_agents
@@ -611,8 +721,20 @@ async def get_stats(
         "payments": {
             "total_count": len(all_payments),
             "total_amount": total_paid
-        }
+        },
+        "load_balancer": lb_stats
     }
+
+
+@app.get("/api/admin/load-balancer")
+async def get_load_balancer_stats(admin: bool = Depends(get_admin)):
+    """Admin: Get detailed load balancer statistics"""
+    global load_balancer
+    
+    if not load_balancer:
+        raise HTTPException(status_code=503, detail="Load balancer not initialized")
+    
+    return load_balancer.get_stats()
 
 
 # ============================================================================
@@ -671,7 +793,7 @@ async def process_payment(job_id: str, agent_id: str, wallet_address: str, amoun
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
-    global payment_module
+    global payment_module, load_balancer
     
     logger.info("=" * 60)
     logger.info("Starting node3 Production Marketplace")
@@ -682,6 +804,19 @@ async def startup_event():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("✓ Database ready")
+    
+    # Initialize load balancer
+    logger.info("Initializing load balancer...")
+    load_balancer = LoadBalancer(
+        heartbeat_timeout=60,
+        job_timeout_buffer=1.2,
+        rebalance_interval=30
+    )
+    logger.info("✓ Load balancer ready")
+    
+    # Start load balancer maintenance task
+    asyncio.create_task(load_balancer.run_maintenance())
+    logger.info("✓ Load balancer maintenance task started")
     
     # Initialize payment system
     logger.info("Initializing payment system...")

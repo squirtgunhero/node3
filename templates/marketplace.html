@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>node³ Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-hover: #fafafa;
+            --border-color: #e5e7eb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --accent: #000000;
+            --accent-light: #18181b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-card: #111111;
+            --bg-hover: #1a1a1a;
+            --border-color: #262626;
+            --text-primary: #ffffff;
+            --text-secondary: #a3a3a3;
+            --text-tertiary: #737373;
+            --accent: #ffffff;
+            --accent-light: #e5e5e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body, nav, .container, .card, .modal-content, .stat-card, 
+        .detail-box, .chat-widget, input, select, button {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+        
+        /* Navigation */
+        nav {
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 0;
+            margin-bottom: 48px;
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-left {
+            display: flex;
+            gap: 48px;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 32px;
+        }
+        
+        .nav-tab {
+            padding: 8px 0;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+        }
+        
+        .nav-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .nav-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        
+        .nav-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-primary);
+        }
+        
+        .button {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+        }
+        
+        .button-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        .button-primary:hover {
+            background: var(--accent-light);
+        }
+        
+        .button-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .button-secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--text-tertiary);
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--text-tertiary);
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        
+        /* Search & Filters */
+        .search-section {
+            margin-bottom: 32px;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-primary);
+        }
+        
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        /* Advanced Filters */
+        .advanced-filters {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: none;
+        }
+        
+        .advanced-filters.visible {
+            display: block;
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+        
+        .filter-select {
+            padding: 10px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .filter-select:hover {
+            border-color: var(--text-tertiary);
+        }
+        
+        /* Price Slider */
+        .price-slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .price-range-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .price-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-color);
+            outline: none;
+        }
+        
+        .price-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .price-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .price-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-chip {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+        
+        .filter-chip:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        
+        .filter-chip.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        /* Cards Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            border-color: var(--text-tertiary);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .card:hover {
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+        
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .card-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .card-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .badge-available {
+            background: #ecfdf5;
+            color: var(--success);
+        }
+        
+        [data-theme="dark"] .badge-available {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        .badge-gpu {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        [data-theme="dark"] .badge-gpu {
+            background: rgba(217, 119, 6, 0.15);
+            color: #fbbf24;
+        }
+        
+        .badge-online {
+            background: #ecfdf5;
+            color: var(--success);
+        }
+        
+        [data-theme="dark"] .badge-online {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        /* Rating */
+        .rating {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .star {
+            width: 14px;
+            height: 14px;
+            color: #fbbf24;
+        }
+        
+        .star.empty {
+            color: var(--border-color);
+        }
+        
+        .rating-count {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-left: 4px;
+        }
+        
+        .card-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .detail-value.highlight {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .card-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .card-action {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .card-action:hover {
+            background: var(--accent-light);
+        }
+        
+        .card-action.secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .card-action.secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--text-tertiary);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-tertiary);
+        }
+        
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            opacity: 0.3;
+        }
+        
+        .empty-state-text {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .empty-state-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="dark"] .modal-content {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        
+        .modal-section {
+            margin-bottom: 32px;
+        }
+        
+        .modal-section-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .detail-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        
+        .modal-actions .button {
+            flex: 1;
+            padding: 14px;
+            justify-content: center;
+            display: flex;
+        }
+        
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 380px;
+            height: 550px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+        }
+        
+        .chat-widget.active {
+            display: flex;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .message.received {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+        }
+        
+        .message.sent {
+            background: var(--accent);
+            color: var(--bg-primary);
+            align-self: flex-end;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+        
+        .chat-input-container {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .chat-send {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .chat-send:hover {
+            background: var(--accent-light);
+        }
+        
+        .chat-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            z-index: 998;
+        }
+        
+        .chat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="dark"] .chat-button {
+            box-shadow: 0 4px 24px rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="dark"] .chat-button:hover {
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.15);
+        }
+        
+        .chat-button.hidden {
+            display: none;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        /* Form Inputs */
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-primary);
+        }
+        
+        input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            
+            .nav-content {
+                padding: 0 20px;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-widget {
+                width: 100%;
+                height: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <div class="nav-left">
+                <div class="nav-logo">node³</div>
+                <div class="nav-tabs">
+                    <div class="nav-tab active" onclick="switchTab('jobs')">Jobs</div>
+                    <div class="nav-tab" onclick="switchTab('compute')">Compute</div>
+                </div>
+            </div>
+            <div class="nav-right">
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <svg id="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <button class="button button-secondary" onclick="toggleFilters()">Filters</button>
+                <button class="button button-primary" onclick="showPostJobModal()">Post Job</button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Available Jobs</div>
+                <div class="stat-value" id="total-jobs">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Agents</div>
+                <div class="stat-value" id="total-agents">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">GPU Providers</div>
+                <div class="stat-value" id="total-gpus">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Reward</div>
+                <div class="stat-value" id="avg-reward">0.000 SOL</div>
+            </div>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" id="advanced-filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Sort By</label>
+                    <select class="filter-select" id="sort-by" onchange="applySorting()">
+                        <option value="reward-high">Reward (High to Low)</option>
+                        <option value="reward-low">Reward (Low to High)</option>
+                        <option value="duration">Duration (Shortest)</option>
+                        <option value="memory">GPU Memory</option>
+                        <option value="rating">Rating (Highest)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">GPU Memory</label>
+                    <select class="filter-select" id="gpu-memory" onchange="applyFilters()">
+                        <option value="all">Any</option>
+                        <option value="8">8 GB+</option>
+                        <option value="16">16 GB+</option>
+                        <option value="24">24 GB+</option>
+                        <option value="40">40 GB+</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Framework</label>
+                    <select class="filter-select" id="framework" onchange="applyFilters()">
+                        <option value="all">Any</option>
+                        <option value="CUDA">CUDA</option>
+                        <option value="ROCm">ROCm</option>
+                        <option value="Metal">Metal</option>
+                        <option value="OpenCL">OpenCL</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Price Range</label>
+                    <div class="price-slider-container">
+                        <div class="price-range-display">
+                            <span id="min-price">0.0000 SOL</span>
+                            <span id="max-price">0.0100 SOL</span>
+                        </div>
+                        <input type="range" class="price-slider" id="price-range" min="0" max="100" value="50" oninput="updatePriceRange()">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search jobs, providers, or frameworks..." id="search-input" oninput="performSearch()">
+                <button class="button button-primary" onclick="performSearch()">Search</button>
+            </div>
+            
+            <div class="filters" id="filters">
+                <!-- Filters will be populated by JS -->
+            </div>
+        </div>
+        
+        <!-- Content Grid -->
+        <div id="content-container">
+            <!-- Content will be populated by JS -->
+        </div>
+    </div>
+    
+    <!-- Job Details Modal -->
+    <div class="modal" id="job-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-job-title">Job Details</div>
+                <button class="modal-close" onclick="closeModal('job-details-modal')">&times;</button>
+            </div>
+            <div id="job-details-content"></div>
+        </div>
+    </div>
+    
+    <!-- Provider Details Modal -->
+    <div class="modal" id="provider-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-provider-title">Provider Details</div>
+                <button class="modal-close" onclick="closeModal('provider-details-modal')">&times;</button>
+            </div>
+            <div id="provider-details-content"></div>
+        </div>
+    </div>
+    
+    <!-- Post Job Modal -->
+    <div class="modal" id="post-job-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Post New Job</div>
+                <button class="modal-close" onclick="closeModal('post-job-modal')">&times;</button>
+            </div>
+            
+            <form id="post-job-form" onsubmit="submitJob(event)">
+                <div class="form-group">
+                    <label>Job Type</label>
+                    <input type="text" name="job_type" placeholder="inference, training, etc." required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Docker Image</label>
+                    <input type="text" name="docker_image" placeholder="python:3.11-slim" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Reward (SOL)</label>
+                    <input type="number" name="reward" step="0.0001" placeholder="0.001" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>GPU Memory Required (GB)</label>
+                    <input type="number" name="gpu_memory" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="requires_gpu" style="margin-right: 8px; width: auto;">
+                        Requires GPU
+                    </label>
+                </div>
+                
+                <button type="submit" class="button button-primary" style="width: 100%; padding: 14px;">Post Job</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Chat Widget -->
+    <button class="chat-button" id="chat-button" onclick="toggleChat()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="notification-badge" id="chat-badge">3</span>
+    </button>
+    
+    <div class="chat-widget" id="chat-widget">
+        <div class="chat-header">
+            <div>
+                <div class="chat-title" id="chat-partner-name">Support</div>
+                <div class="chat-status">
+                    <span class="status-dot"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+            <button class="modal-close" onclick="toggleChat()">&times;</button>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message received">
+                <div>Welcome to node³ Marketplace. How can I help you?</div>
+                <div class="message-time">2 minutes ago</div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+            <button class="chat-send" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentTab = 'jobs';
+        let currentFilter = 'all';
+        let jobs = [];
+        let agents = [];
+        let filtersVisible = false;
+        let searchQuery = '';
+        
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+        
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+            
+            if (theme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+        
+        // Initialize theme before anything else
+        initTheme();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupFilters();
+        });
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            setupFilters();
+            renderContent();
+        }
+        
+        function toggleFilters() {
+            filtersVisible = !filtersVisible;
+            const filters = document.getElementById('advanced-filters');
+            if (filtersVisible) {
+                filters.classList.add('visible');
+            } else {
+                filters.classList.remove('visible');
+            }
+        }
+        
+        function setupFilters() {
+            const filtersContainer = document.getElementById('filters');
+            
+            if (currentTab === 'jobs') {
+                filtersContainer.innerHTML = `
+                    <div class="filter-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')">All Jobs</div>
+                    <div class="filter-chip ${currentFilter === 'inference' ? 'active' : ''}" onclick="setFilter('inference')">Inference</div>
+                    <div class="filter-chip ${currentFilter === 'training' ? 'active' : ''}" onclick="setFilter('training')">Training</div>
+                `;
+            } else {
+                filtersContainer.innerHTML = `
+                    <div class="filter-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')">All Providers</div>
+                    <div class="filter-chip ${currentFilter === 'nvidia' ? 'active' : ''}" onclick="setFilter('nvidia')">NVIDIA</div>
+                    <div class="filter-chip ${currentFilter === 'amd' ? 'active' : ''}" onclick="setFilter('amd')">AMD</div>
+                    <div class="filter-chip ${currentFilter === 'available' ? 'active' : ''}" onclick="setFilter('available')">Available</div>
+                    <div class="filter-chip ${currentFilter === '5star' ? 'active' : ''}" onclick="setFilter('5star')">Top Rated</div>
+                `;
+            }
+        }
+        
+        function setFilter(filter) {
+            currentFilter = filter;
+            setupFilters();
+            renderContent();
+        }
+        
+        function updatePriceRange() {
+            const slider = document.getElementById('price-range');
+            const value = slider.value;
+            const maxPrice = (value / 10).toFixed(4);
+            document.getElementById('max-price').textContent = maxPrice + ' SOL';
+            applyFilters();
+        }
+        
+        function applySorting() {
+            renderContent();
+        }
+        
+        function applyFilters() {
+            renderContent();
+        }
+        
+        function performSearch() {
+            searchQuery = document.getElementById('search-input').value.toLowerCase();
+            renderContent();
+        }
+        
+        async function loadData() {
+            try {
+                const jobsResponse = await fetch('/api/marketplace/jobs');
+                const jobsData = await jobsResponse.json();
+                jobs = jobsData.jobs.map(job => ({
+                    ...job,
+                    rating: (Math.random() * 2 + 3).toFixed(1)
+                })) || [];
+                
+                const agentsResponse = await fetch('/api/marketplace/agents');
+                const agentsData = await agentsResponse.json();
+                agents = agentsData.agents.map(agent => ({
+                    ...agent,
+                    rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+                    reviews: Math.floor(Math.random() * 200 + 10)
+                })) || [];
+                
+                updateStats();
+                renderContent();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('total-jobs').textContent = jobs.length;
+            document.getElementById('total-agents').textContent = agents.length;
+            document.getElementById('total-gpus').textContent = agents.filter(a => a.gpu_count > 0).length;
+            
+            const avgReward = jobs.length > 0 ? 
+                (jobs.reduce((sum, j) => sum + j.reward, 0) / jobs.length).toFixed(4) : 
+                '0.000';
+            document.getElementById('avg-reward').textContent = avgReward + ' SOL';
+        }
+        
+        function renderStars(rating) {
+            const fullStars = Math.floor(rating);
+            let html = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const filled = i < fullStars;
+                html += `<svg class="star ${filled ? '' : 'empty'}" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>`;
+            }
+            
+            return html;
+        }
+        
+        function renderContent() {
+            const container = document.getElementById('content-container');
+            
+            if (currentTab === 'jobs') {
+                renderJobs(container);
+            } else {
+                renderAgents(container);
+            }
+        }
+        
+        function renderJobs(container) {
+            let filteredJobs = jobs;
+            
+            if (searchQuery) {
+                filteredJobs = filteredJobs.filter(j => 
+                    j.job_type.toLowerCase().includes(searchQuery) ||
+                    j.docker_image.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            if (currentFilter !== 'all') {
+                filteredJobs = filteredJobs.filter(j => j.job_type === currentFilter);
+            }
+            
+            const maxPrice = parseFloat(document.getElementById('price-range')?.value || 50) / 1000;
+            filteredJobs = filteredJobs.filter(j => j.reward <= maxPrice);
+            
+            const gpuMemFilter = document.getElementById('gpu-memory')?.value;
+            if (gpuMemFilter && gpuMemFilter !== 'all') {
+                const minMem = parseInt(gpuMemFilter) * 1e9;
+                filteredJobs = filteredJobs.filter(j => j.gpu_memory_required >= minMem);
+            }
+            
+            const sortBy = document.getElementById('sort-by')?.value;
+            if (sortBy === 'reward-high') {
+                filteredJobs.sort((a, b) => b.reward - a.reward);
+            } else if (sortBy === 'reward-low') {
+                filteredJobs.sort((a, b) => a.reward - b.reward);
+            } else if (sortBy === 'duration') {
+                filteredJobs.sort((a, b) => a.estimated_duration - b.estimated_duration);
+            } else if (sortBy === 'rating') {
+                filteredJobs.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+            }
+            
+            if (filteredJobs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-text">No jobs found</div>
+                        <div class="empty-state-subtext">Try adjusting your filters or search</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `<div class="grid">${filteredJobs.map(job => `
+                <div class="card" onclick="showJobDetails('${job.job_id}')">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${job.job_type}</div>
+                            <div class="card-subtitle">${job.docker_image}</div>
+                            <div class="rating">
+                                ${renderStars(parseFloat(job.rating))}
+                                <span class="rating-count">(${Math.floor(Math.random() * 50 + 5)})</span>
+                            </div>
+                        </div>
+                        <div class="card-badge badge-gpu">
+                            GPU
+                        </div>
+                    </div>
+                    
+                    <div class="card-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Reward</div>
+                            <div class="detail-value highlight">${job.reward.toFixed(4)} SOL</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Duration</div>
+                            <div class="detail-value">${job.estimated_duration}s</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">GPU Memory</div>
+                            <div class="detail-value">${(job.gpu_memory_required / 1e9).toFixed(1)} GB</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Timeout</div>
+                            <div class="detail-value">${job.timeout}s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <span class="card-badge badge-available">Available</span>
+                        <button class="card-action" onclick="event.stopPropagation(); acceptJob('${job.job_id}')">Accept</button>
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+        
+        function renderAgents(container) {
+            let filteredAgents = agents;
+            
+            if (searchQuery) {
+                filteredAgents = filteredAgents.filter(a => 
+                    a.gpu_model.toLowerCase().includes(searchQuery) ||
+                    a.gpu_vendor.toLowerCase().includes(searchQuery) ||
+                    a.compute_framework.toLowerCase().includes(searchQuery)
+                );
+            }
+            
+            if (currentFilter === 'nvidia') {
+                filteredAgents = filteredAgents.filter(a => a.gpu_vendor === 'NVIDIA');
+            } else if (currentFilter === 'amd') {
+                filteredAgents = filteredAgents.filter(a => a.gpu_vendor === 'AMD');
+            } else if (currentFilter === 'available') {
+                filteredAgents = filteredAgents.filter(a => a.status === 'available');
+            } else if (currentFilter === '5star') {
+                filteredAgents = filteredAgents.filter(a => parseFloat(a.rating) >= 4.5);
+            }
+            
+            const framework = document.getElementById('framework')?.value;
+            if (framework && framework !== 'all') {
+                filteredAgents = filteredAgents.filter(a => a.compute_framework === framework);
+            }
+            
+            const gpuMemFilter = document.getElementById('gpu-memory')?.value;
+            if (gpuMemFilter && gpuMemFilter !== 'all') {
+                const minMem = parseInt(gpuMemFilter) * 1e9;
+                filteredAgents = filteredAgents.filter(a => a.gpu_memory >= minMem);
+            }
+            
+            const sortBy = document.getElementById('sort-by')?.value;
+            if (sortBy === 'reward-high' || sortBy === 'reward-low') {
+                const direction = sortBy === 'reward-high' ? -1 : 1;
+                filteredAgents.sort((a, b) => direction * (parseFloat(b.rate) - parseFloat(a.rate)));
+            } else if (sortBy === 'rating') {
+                filteredAgents.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+            }
+            
+            if (filteredAgents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-text">No compute providers found</div>
+                        <div class="empty-state-subtext">Try adjusting your filters or search</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `<div class="grid">${filteredAgents.map(agent => `
+                <div class="card" onclick="showProviderDetails('${agent.id}')">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${agent.gpu_model}</div>
+                            <div class="card-subtitle">${agent.gpu_vendor}</div>
+                            <div class="rating">
+                                ${renderStars(parseFloat(agent.rating))}
+                                <span class="rating-count">(${agent.reviews})</span>
+                            </div>
+                        </div>
+                        <span class="card-badge badge-online">Online</span>
+                    </div>
+                    
+                    <div class="card-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Memory</div>
+                            <div class="detail-value">${(agent.gpu_memory / 1e9).toFixed(0)} GB</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Jobs Done</div>
+                            <div class="detail-value">${agent.jobs_completed || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Uptime</div>
+                            <div class="detail-value">${agent.uptime || '99%'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Rate</div>
+                            <div class="detail-value highlight">${agent.rate} SOL/hr</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <span class="card-info">${agent.compute_framework}</span>
+                        <button class="card-action" onclick="event.stopPropagation(); startChat('${agent.id}', '${agent.gpu_model}')">Contact</button>
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+        
+        function showJobDetails(jobId) {
+            const job = jobs.find(j => j.job_id === jobId);
+            if (!job) return;
+            
+            document.getElementById('modal-job-title').textContent = job.job_type;
+            document.getElementById('job-details-content').innerHTML = `
+                <div class="modal-section">
+                    <div class="rating">
+                        ${renderStars(parseFloat(job.rating))}
+                        <span class="rating-count">(${Math.floor(Math.random() * 50 + 5)} reviews)</span>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Job Information</div>
+                    <div class="detail-grid">
+                        <div class="detail-box">
+                            <div class="detail-label">Job Type</div>
+                            <div class="detail-value">${job.job_type}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Reward</div>
+                            <div class="detail-value highlight">${job.reward.toFixed(4)} SOL</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Docker Image</div>
+                            <div class="detail-value" style="font-size: 12px;">${job.docker_image}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Duration</div>
+                            <div class="detail-value">${job.estimated_duration}s</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Requirements</div>
+                    <div class="detail-grid">
+                        <div class="detail-box">
+                            <div class="detail-label">GPU Required</div>
+                            <div class="detail-value">${job.requires_gpu ? 'Yes' : 'No'}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">GPU Memory</div>
+                            <div class="detail-value">${(job.gpu_memory_required / 1e9).toFixed(1)} GB</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Timeout</div>
+                            <div class="detail-value">${job.timeout}s</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Job ID</div>
+                            <div class="detail-value" style="font-size: 11px; font-family: monospace;">${job.job_id}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="button button-primary" onclick="acceptJob('${job.job_id}')">Accept Job</button>
+                </div>
+            `;
+            
+            document.getElementById('job-details-modal').classList.add('active');
+        }
+        
+        function showProviderDetails(agentId) {
+            const agent = agents.find(a => a.id === agentId);
+            if (!agent) return;
+            
+            document.getElementById('modal-provider-title').textContent = agent.gpu_model;
+            document.getElementById('provider-details-content').innerHTML = `
+                <div class="modal-section">
+                    <div class="rating">
+                        ${renderStars(parseFloat(agent.rating))}
+                        <span class="rating-count">(${agent.reviews} reviews)</span>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Hardware</div>
+                    <div class="detail-grid">
+                        <div class="detail-box">
+                            <div class="detail-label">GPU Model</div>
+                            <div class="detail-value">${agent.gpu_model}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Vendor</div>
+                            <div class="detail-value">${agent.gpu_vendor}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Memory</div>
+                            <div class="detail-value">${(agent.gpu_memory / 1e9).toFixed(0)} GB</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Framework</div>
+                            <div class="detail-value">${agent.compute_framework}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Performance</div>
+                    <div class="detail-grid">
+                        <div class="detail-box">
+                            <div class="detail-label">Jobs Completed</div>
+                            <div class="detail-value">${agent.jobs_completed}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Uptime</div>
+                            <div class="detail-value">${agent.uptime}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Hourly Rate</div>
+                            <div class="detail-value highlight">${agent.rate} SOL</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value" style="color: var(--success);">Available</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="button button-primary" onclick="startChat('${agent.id}', '${agent.gpu_model}')">Start Chat</button>
+                    <button class="button button-secondary" onclick="contactAgent('${agent.id}')">Contact</button>
+                </div>
+            `;
+            
+            document.getElementById('provider-details-modal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            if (modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            } else {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
+        }
+        
+        function showPostJobModal() {
+            document.getElementById('post-job-modal').classList.add('active');
+        }
+        
+        async function submitJob(event) {
+            event.preventDefault();
+            alert('Job posted successfully');
+            closeModal('post-job-modal');
+        }
+        
+        function acceptJob(jobId) {
+            alert('Job accepted successfully');
+            closeModal();
+        }
+        
+        function contactAgent(agentId) {
+            alert('Contact request sent');
+        }
+        
+        function toggleChat() {
+            const widget = document.getElementById('chat-widget');
+            const button = document.getElementById('chat-button');
+            
+            widget.classList.toggle('active');
+            button.classList.toggle('hidden');
+            
+            if (widget.classList.contains('active')) {
+                document.getElementById('chat-badge').style.display = 'none';
+                document.getElementById('chat-input').focus();
+            }
+        }
+        
+        function startChat(agentId, agentName) {
+            document.getElementById('chat-partner-name').textContent = agentName;
+            
+            const messages = document.getElementById('chat-messages');
+            messages.innerHTML = `
+                <div class="message received">
+                    <div>Hello, I'm available for compute jobs. What do you need?</div>
+                    <div class="message-time">Just now</div>
+                </div>
+            `;
+            
+            closeModal();
+            toggleChat();
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            messagesContainer.innerHTML += `
+                <div class="message sent">
+                    <div>${message}</div>
+                    <div class="message-time">Just now</div>
+                </div>
+            `;
+            
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            setTimeout(() => {
+                messagesContainer.innerHTML += `
+                    <div class="message received">
+                        <div>Thank you for your message. I'll respond shortly.</div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                `;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+        }
+        
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>

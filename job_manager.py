@@ -81,8 +81,17 @@ class JobManager:
         self.is_running = True
         logger.info("Job manager started")
         
+        heartbeat_counter = 0
+        
         while self.is_running:
             try:
+                # Send heartbeat every 30 seconds (3 poll cycles)
+                if heartbeat_counter >= 3:
+                    await self.send_heartbeat()
+                    heartbeat_counter = 0
+                else:
+                    heartbeat_counter += 1
+                
                 # Poll for new jobs
                 await self.poll_marketplace()
                 
@@ -96,6 +105,24 @@ class JobManager:
                 logger.error(f"Error in job manager loop: {e}")
                 await asyncio.sleep(30)
                 
+    async def send_heartbeat(self):
+        """Send heartbeat to marketplace to indicate agent is alive"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.marketplace_url}/api/agents/heartbeat",
+                    headers={'X-API-Key': self.api_key} if self.api_key else {},
+                    timeout=5.0
+                )
+                
+                if response.status_code == 200:
+                    logger.debug("Heartbeat sent successfully")
+                else:
+                    logger.warning(f"Heartbeat failed: {response.status_code}")
+                    
+        except Exception as e:
+            logger.debug(f"Error sending heartbeat: {e}")
+    
     async def poll_marketplace(self):
         """Poll marketplace for available jobs
         
@@ -116,7 +143,7 @@ class JobManager:
                         'compute_capability': self.gpu_info.get('compute_capability'),
                         'max_concurrent_jobs': 1  # MVP: one job at a time
                     },
-                    headers={'Authorization': f'Bearer {self.api_key}'},
+                    headers={'X-API-Key': self.api_key} if self.api_key else {},
                     timeout=10.0
                 )
                 
@@ -166,7 +193,7 @@ class JobManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.marketplace_url}/api/jobs/{job.job_id}/accept",
-                    headers={'Authorization': f'Bearer {self.api_key}'},
+                    headers={'X-API-Key': self.api_key} if self.api_key else {},
                     json={"wallet_address": wallet_address},  # Send wallet for payment
                     timeout=10.0
                 )
@@ -411,7 +438,7 @@ class JobManager:
                         'completed_at': job.completed_at.isoformat(),
                         'duration': (job.completed_at - job.started_at).total_seconds()
                     },
-                    headers={'Authorization': f'Bearer {self.api_key}'},
+                    headers={'X-API-Key': self.api_key} if self.api_key else {},
                     timeout=10.0
                 )
                 
@@ -435,7 +462,7 @@ class JobManager:
                         'started_at': job.started_at.isoformat() if job.started_at else None,
                         'failed_at': job.completed_at.isoformat() if job.completed_at else None
                     },
-                    headers={'Authorization': f'Bearer {self.api_key}'},
+                    headers={'X-API-Key': self.api_key} if self.api_key else {},
                     timeout=10.0
                 )
                 
