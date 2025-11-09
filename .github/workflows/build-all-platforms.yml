@@ -132,6 +132,26 @@ jobs:
       - name: Build macOS app and DMG
         run: python build.py --type macos
       
+      - name: Verify .app bundle was created
+        run: |
+          if [ ! -d "dist/node3-agent.app" ]; then
+            echo "❌ Error: dist/node3-agent.app was not created"
+            echo "Build output:"
+            ls -la dist/ || echo "dist directory not found"
+            exit 1
+          fi
+          echo "✓ .app bundle found at dist/node3-agent.app"
+      
+      - name: Verify DMG was created
+        run: |
+          if [ ! -f node3-agent-installer.dmg ]; then
+            echo "❌ Error: node3-agent-installer.dmg was not created"
+            echo "Files in current directory:"
+            ls -la *.dmg || echo "No DMG files found"
+            exit 1
+          fi
+          echo "✓ DMG installer found"
+      
       - name: Get version
         id: version
         run: |

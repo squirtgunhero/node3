@@ -108,8 +108,11 @@ def build_executable():
             print("     - Using --exclude-module for unused libraries")
             print("     - Using UPX compression (--upx-dir)")
             print("     - Splitting into separate modules")
+        return True
     else:
-        print("⚠️  Executable not found - check build output for errors")
+        print("❌ Executable not found - check build output for errors")
+        print(f"   Expected: {exe_path}")
+        return False
 
 def build_docker_image():
     """Build Docker image"""
@@ -212,10 +215,17 @@ def create_app_bundle():
 def create_installer_macos():
     """Create macOS installer (.dmg) with Lima bundled"""
     if sys.platform != 'darwin':
-        print("macOS installer can only be created on macOS")
-        return
+        print("❌ macOS installer can only be created on macOS")
+        return False
     
     print("Creating macOS installer...")
+    
+    # Verify executable exists first
+    exe_path = Path('dist/node3-agent')
+    if not exe_path.exists():
+        print("❌ Executable not found at dist/node3-agent")
+        print("   Run build_executable() first or check build output")
+        return False
     
     # Clean up old .app bundle if exists
     app_path = Path('dist/node3-agent.app')
@@ -225,8 +235,13 @@ def create_installer_macos():
     
     # Create .app bundle first
     if not create_app_bundle():
-        print("Failed to create .app bundle")
-        return
+        print("❌ Failed to create .app bundle")
+        return False
+    
+    # Verify .app bundle was created
+    if not app_path.exists():
+        print("❌ .app bundle was not created successfully")
+        return False
     
     # Create DMG using hdiutil
     dmg_name = 'node3-agent-installer.dmg'
@@ -238,17 +253,28 @@ def create_installer_macos():
         Path(dmg_name).unlink()
     
     print("Creating DMG...")
-    subprocess.run([
-        'hdiutil', 'create',
-        '-volname', 'node³ Agent',
-        '-srcfolder', str(dmg_source / 'node3-agent.app'),
-        '-ov',
-        '-format', 'UDZO',
-        dmg_name
-    ], check=True)
+    try:
+        subprocess.run([
+            'hdiutil', 'create',
+            '-volname', 'node³ Agent',
+            '-srcfolder', str(dmg_source / 'node3-agent.app'),
+            '-ov',
+            '-format', 'UDZO',
+            dmg_name
+        ], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create DMG: {e}")
+        return False
+    
+    # Verify DMG was created
+    dmg_path = Path(dmg_name)
+    if not dmg_path.exists():
+        print("❌ DMG file was not created")
+        return False
     
     print(f"✓ macOS installer created: {dmg_name}")
-    print(f"  Size: {Path(dmg_name).stat().st_size / 1024 / 1024:.1f} MB")
+    print(f"  Size: {dmg_path.stat().st_size / 1024 / 1024:.1f} MB")
+    return True
 
 def create_windows_installer():
     """Create Windows installer (.exe)"""
@@ -371,8 +397,14 @@ if __name__ == '__main__':
     
     if args.type == 'macos' or args.type == 'all':
         if sys.platform == 'darwin':
-            build_executable()
-            create_installer_macos()
+            if not build_executable():
+                print("\n❌ macOS build failed - executable build error")
+                sys.exit(1)
+            if not create_installer_macos():
+                print("\n❌ macOS installer creation failed")
+                sys.exit(1)
+        else:
+            print("⚠️  Skipping macOS build (not on macOS)")
     
     if args.type == 'windows' or args.type == 'all':
         if sys.platform == 'win32':

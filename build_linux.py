@@ -117,7 +117,7 @@ def build_executable():
     
     # Import PyInstaller API to run in same process (so recursion limit takes effect)
     try:
-        import PyInstaller.__main__
+        import PyInstaller.__main__  # type: ignore
     except ImportError:
         print("❌ PyInstaller not found. Install with: pip install pyinstaller")
         return False
@@ -132,18 +132,21 @@ def build_executable():
         returncode = e.code if e.code else 0
     
     if returncode == 0:
-        print("\n✓ Executable built successfully!")
-        
-        # Get file size
+        # Verify executable was created
         exe_path = Path('dist') / 'node3-agent'
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
+            print("\n✓ Executable built successfully!")
             print(f"✓ Size: {size_mb:.1f} MB")
             print(f"✓ Location: {exe_path}")
             
             # Make executable
             exe_path.chmod(0o755)
-        return True
+            return True
+        else:
+            print("\n❌ Build reported success but executable not found!")
+            print(f"   Expected: {exe_path}")
+            return False
     else:
         print("\n❌ Build failed!")
         return False
