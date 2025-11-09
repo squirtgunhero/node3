@@ -42,7 +42,10 @@ def build_executable():
         '--hidden-import=native_executor',
         '--hidden-import=psutil',
         # Exclude unnecessary modules to reduce size
+        # Aggressively exclude ML frameworks and their dependencies
         '--exclude-module=torch',
+        '--exclude-module=torch.utils',
+        '--exclude-module=torch.utils.tensorboard',
         '--exclude-module=tensorflow',
         '--exclude-module=matplotlib',
         '--exclude-module=numpy',  # Only include if needed
