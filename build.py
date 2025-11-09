@@ -42,6 +42,8 @@ def build_executable():
         '--hidden-import=native_executor',
         '--hidden-import=psutil',
         # Exclude unnecessary modules to reduce size
+        '--exclude-module=torch',
+        '--exclude-module=tensorflow',
         '--exclude-module=matplotlib',
         '--exclude-module=numpy',  # Only include if needed
         '--exclude-module=pandas',
@@ -54,6 +56,8 @@ def build_executable():
         '--exclude-module=PyQt6',
         '--exclude-module=PySide2',
         '--exclude-module=PySide6',
+        '--exclude-module=pytest',
+        '--exclude-module=tensorboard',
         # Optimize collections - only collect what's needed
         '--collect-all=fastapi',
         '--collect-all=uvicorn',
