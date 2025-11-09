@@ -72,6 +72,7 @@ def build_executable():
         '--windowed',
         '--icon=icon.ico',  # Windows uses .ico
         '--add-data=templates;templates',
+        '--additional-hooks-dir=.',  # Use our custom hooks to override torch
         
         # Hidden imports
         '--hidden-import=uvicorn.logging',

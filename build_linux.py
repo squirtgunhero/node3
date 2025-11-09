@@ -73,6 +73,7 @@ def build_executable():
         '--name=node3-agent',
         '--onefile',
         '--add-data=templates:templates',
+        '--additional-hooks-dir=.',  # Use our custom hooks to override torch
         
         # Hidden imports
         '--hidden-import=uvicorn.logging',
