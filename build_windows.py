@@ -55,6 +55,9 @@ def build_executable():
     """Build Windows executable with PyInstaller"""
     print_step("Building Windows executable")
     
+    # Increase recursion limit for deep import chains during PyInstaller analysis
+    sys.setrecursionlimit(3000)
+    
     # Check PyInstaller
     try:
         subprocess.run(['pyinstaller', '--version'], 

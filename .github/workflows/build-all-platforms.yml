@@ -24,7 +24,9 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          pip uninstall -y torch numpy tensorboard || echo "Packages not installed"
+          # Install numpy/tensorboard for PyInstaller analysis phase only
+          # They will be excluded from final executable via --exclude-module flags
+          pip install numpy tensorboard
       
       - name: Build Windows executable
         run: python build_windows.py --no-installer
@@ -67,8 +69,9 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          # Ensure torch/numpy/tensorboard are NOT installed
-          pip uninstall -y torch numpy tensorboard || true
+          # Install numpy/tensorboard for PyInstaller analysis phase only
+          # They will be excluded from final executable via --exclude-module flags
+          pip install numpy tensorboard
       
       - name: Build Linux executable
         run: python build_linux.py
@@ -116,8 +119,9 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          # Ensure torch/numpy/tensorboard are NOT installed
-          pip uninstall -y torch numpy tensorboard || true
+          # Install numpy/tensorboard for PyInstaller analysis phase only
+          # They will be excluded from final executable via --exclude-module flags
+          pip install numpy tensorboard
       
       - name: Build macOS app
         run: python build.py --type exe

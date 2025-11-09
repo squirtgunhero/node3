@@ -13,6 +13,9 @@ def build_executable():
     """Build executable using PyInstaller"""
     print("Building executable with PyInstaller...")
     
+    # Increase recursion limit for deep import chains during PyInstaller analysis
+    sys.setrecursionlimit(3000)
+    
     # Clean up old build artifacts
     dist_dir = Path('dist')
     build_dir = Path('build')
