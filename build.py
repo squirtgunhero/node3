@@ -9,6 +9,12 @@ import subprocess
 import shutil
 from pathlib import Path
 
+# Ensure UTF-8 encoding for console output (especially on Windows)
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except (AttributeError, OSError):
+    pass  # Not needed or not supported on this platform
+
 def build_executable():
     """Build executable using PyInstaller"""
     print("Building executable with PyInstaller...")

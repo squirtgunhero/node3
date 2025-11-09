@@ -11,6 +11,9 @@ jobs:
     name: Build Windows Installer
     runs-on: windows-latest
     
+    env:
+      PYTHONIOENCODING: utf-8
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

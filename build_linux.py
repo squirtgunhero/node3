@@ -22,6 +22,12 @@ import subprocess
 import shutil
 from pathlib import Path
 
+# Ensure UTF-8 encoding for console output
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except (AttributeError, OSError):
+    pass  # Not needed or not supported on this platform
+
 def print_step(msg):
     print(f"\n{'='*60}")
     print(f"  {msg}")

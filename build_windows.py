@@ -20,6 +20,15 @@ import subprocess
 import shutil
 from pathlib import Path
 
+# Ensure UTF-8 encoding for Windows console output
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        # Python < 3.7 fallback
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+
 def print_step(msg):
     print(f"\n{'='*60}")
     print(f"  {msg}")
@@ -235,7 +244,7 @@ Section "Uninstall"
 SectionEnd
 '''
     
-    with open('node3-setup.nsi', 'w') as f:
+    with open('node3-setup.nsi', 'w', encoding='utf-8') as f:
         f.write(script)
     
     print("✓ Created NSIS script: node3-setup.nsi")
