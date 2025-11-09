@@ -89,6 +89,8 @@ def build_executable():
         '--collect-all=pydantic',
         
         # Exclude unused modules
+        '--exclude-module=torch',
+        '--exclude-module=tensorflow',
         '--exclude-module=matplotlib',
         '--exclude-module=numpy',
         '--exclude-module=pandas',
@@ -101,6 +103,8 @@ def build_executable():
         '--exclude-module=PyQt6',
         '--exclude-module=PySide2',
         '--exclude-module=PySide6',
+        '--exclude-module=pytest',
+        '--exclude-module=tensorboard',
         
         '--strip',
         '--clean',
