@@ -24,6 +24,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
+          pip uninstall -y torch numpy tensorboard || echo "Packages not installed"
       
       - name: Build Windows executable
         run: python build_windows.py --no-installer
@@ -66,6 +67,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
+          # Ensure torch/numpy/tensorboard are NOT installed
+          pip uninstall -y torch numpy tensorboard || true
       
       - name: Build Linux executable
         run: python build_linux.py
@@ -113,6 +116,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
+          # Ensure torch/numpy/tensorboard are NOT installed
+          pip uninstall -y torch numpy tensorboard || true
       
       - name: Build macOS app
         run: python build.py --type exe
