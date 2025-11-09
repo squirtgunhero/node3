@@ -73,7 +73,6 @@ def build_executable():
         '--name=node3-agent',
         '--onefile',
         '--add-data=templates:templates',
-        '--add-data=static:static',
         
         # Hidden imports
         '--hidden-import=uvicorn.logging',
