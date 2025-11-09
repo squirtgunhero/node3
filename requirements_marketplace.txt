@@ -1,0 +1,20 @@
+# Production Marketplace Requirements
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+redis==5.0.1
+pydantic==2.5.0
+python-dotenv==1.0.0
+loguru==0.7.2
+
+# Solana (already in main requirements.txt)
+# solders
+# solana
+
+# Optional: Monitoring
+prometheus-client==0.19.0
+sentry-sdk[fastapi]==1.38.0
+
+click==8.1.7
