@@ -129,17 +129,14 @@ jobs:
           # They will be excluded from final executable via --exclude-module flags
           pip install torch --index-url https://download.pytorch.org/whl/cpu
       
-      - name: Build macOS app
-        run: python build.py --type exe
+      - name: Build macOS app and DMG
+        run: python build.py --type macos
       
       - name: Get version
         id: version
         run: |
           VERSION=$(python -c "import re; content=open('main.py').read(); match=re.search(r\"VERSION\s*=\s*['\\\"]([^'\\\"]+)['\\\"]\", content); print(match.group(1) if match else '1.0.0')")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Create DMG
-        run: bash create_dmg.sh
       
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v4
