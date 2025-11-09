@@ -247,7 +247,16 @@ class PaymentModule:
             logger.info(f"Requesting airdrop of {amount_sol} SOL...")
             
             response = await self.client.request_airdrop(self.pubkey, amount_lamports)
-            signature = str(response.value)
+            
+            # Check if response has an error
+            if hasattr(response, 'value') and response.value:
+                signature = str(response.value)
+            else:
+                logger.error(f"Airdrop request failed: {response}")
+                logger.warning("Devnet faucet may be rate limited or unavailable")
+                logger.warning(f"Manual funding: https://faucet.solana.com")
+                logger.warning(f"Address: {self.pubkey}")
+                return False
             
             logger.info(f"Airdrop requested: {signature}")
             
@@ -261,6 +270,8 @@ class PaymentModule:
             
         except Exception as e:
             logger.error(f"Airdrop failed: {e}")
+            logger.warning("You can manually fund the wallet at: https://faucet.solana.com")
+            logger.warning(f"Wallet address: {self.pubkey}")
             return False
     
     async def get_transaction_details(self, signature: str) -> Optional[Dict]:
