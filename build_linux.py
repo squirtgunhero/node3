@@ -58,9 +58,6 @@ def build_executable():
     """Build Linux executable with PyInstaller"""
     print_step("Building Linux executable")
     
-    # Increase recursion limit for deep import chains during PyInstaller analysis
-    sys.setrecursionlimit(3000)
-    
     # Check PyInstaller
     try:
         subprocess.run(['pyinstaller', '--version'], 
@@ -118,10 +115,23 @@ def build_executable():
         'main.py'
     ]
     
-    print("Building with PyInstaller...")
-    result = subprocess.run(cmd)
+    # Import PyInstaller API to run in same process (so recursion limit takes effect)
+    try:
+        import PyInstaller.__main__
+    except ImportError:
+        print("❌ PyInstaller not found. Install with: pip install pyinstaller")
+        return False
     
-    if result.returncode == 0:
+    print("Building with PyInstaller...")
+    # Increase recursion limit and run PyInstaller
+    sys.setrecursionlimit(3000)  # Handle deep import chains during analysis
+    try:
+        PyInstaller.__main__.run(cmd[1:])
+        returncode = 0
+    except SystemExit as e:
+        returncode = e.code if e.code else 0
+    
+    if returncode == 0:
         print("\n✓ Executable built successfully!")
         
         # Get file size

@@ -13,8 +13,12 @@ def build_executable():
     """Build executable using PyInstaller"""
     print("Building executable with PyInstaller...")
     
-    # Increase recursion limit for deep import chains during PyInstaller analysis
-    sys.setrecursionlimit(3000)
+    # Import PyInstaller API (run in same process so recursion limit takes effect)
+    try:
+        import PyInstaller.__main__  # type: ignore[import-not-found]
+    except ImportError:
+        print("❌ PyInstaller not found. Install with: pip install pyinstaller")
+        return
     
     # Clean up old build artifacts
     dist_dir = Path('dist')
@@ -86,7 +90,9 @@ def build_executable():
         # Change '--console' to '--windowed' for release builds
         pass
     
-    subprocess.run(cmd, check=True)
+    # Increase recursion limit and run PyInstaller in same process
+    sys.setrecursionlimit(3000)  # Handle deep import chains during analysis
+    PyInstaller.__main__.run(cmd[1:])
     
     # Get executable size
     exe_path = Path(f"dist/node3-agent{'.exe' if sys.platform == 'win32' else ''}")
