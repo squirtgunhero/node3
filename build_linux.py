@@ -282,11 +282,10 @@ def main():
     
     version = get_version()
     
-    print(f'''
-{'='*60}
-    Building node3 Agent for Linux v{version}
-{'='*60}
-''')
+    print("=" * 60)
+    print(f"Building node3 Agent for Linux v{version}")
+    print("=" * 60)
+    print()
     
     # Step 1: Clean
     clean_build()
