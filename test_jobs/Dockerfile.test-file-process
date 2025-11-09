@@ -1,0 +1,12 @@
+# File processing test container
+# Tests file I/O and data processing
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN mkdir -p /input /output
+
+COPY file_process_test.py /app/file_process_test.py
+
+CMD ["python", "/app/file_process_test.py"]
+

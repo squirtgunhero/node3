@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>node³ Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: rgba(255, 255, 255, 0.03);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-card-hover: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --success: #30D158;
+            --warning: #FF9F0A;
+            --error: #FF453A;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        :root[data-theme="light"] {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: rgba(0, 0, 0, 0.03);
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --bg-card-hover: rgba(255, 255, 255, 0.95);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --text-primary: #1d1d1f;
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --text-tertiary: rgba(0, 0, 0, 0.4);
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --success: #30D158;
+            --warning: #FF9F0A;
+            --error: #FF453A;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Subtle background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, rgba(0, 122, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 0.3s ease;
+        }
+        
+        :root[data-theme="light"] body::before {
+            background: radial-gradient(ellipse at top, rgba(0, 122, 255, 0.03) 0%, transparent 50%);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        header {
+            margin-bottom: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-content h1 {
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: background 0.3s ease;
+        }
+        
+        :root[data-theme="light"] .header-content h1 {
+            background: linear-gradient(135deg, #1d1d1f 0%, rgba(0, 0, 0, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-content p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        :root[data-theme="light"] .theme-toggle:hover {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .theme-toggle-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--text-primary);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .status-running {
+            background: var(--success);
+            box-shadow: 0 0 12px rgba(48, 209, 88, 0.4);
+        }
+        
+        .status-stopped {
+            background: var(--error);
+            box-shadow: 0 0 12px rgba(255, 69, 58, 0.4);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @media (prefers-reduced-motion: no-preference) {
+            .card {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+        
+        .card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .card h2 {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
+        }
+        
+        .stat {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: background 0.3s ease;
+        }
+        
+        :root[data-theme="light"] .stat {
+            background: linear-gradient(135deg, #1d1d1f 0%, rgba(0, 0, 0, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .label {
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+        
+        /* Buttons */
+        .button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: -0.01em;
+        }
+        
+        .button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+        
+        .button:active {
+            transform: scale(0.98);
+        }
+        
+        .button-secondary {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+        
+        .button-secondary:hover {
+            background: var(--bg-card-hover);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        /* GPU Card */
+        .gpu-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .gpu-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .gpu-name {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        
+        .gpu-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .gpu-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .gpu-stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .gpu-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        :root[data-theme="light"] .progress-bar {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Table */
+        .jobs-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+        }
+        
+        .jobs-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .jobs-table th {
+            text-align: left;
+            padding: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+        
+        .jobs-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .jobs-table tbody tr {
+            transition: background 0.2s ease;
+        }
+        
+        .jobs-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        
+        .badge-completed {
+            background: rgba(48, 209, 88, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(48, 209, 88, 0.2);
+        }
+        
+        .badge-failed {
+            background: rgba(255, 69, 58, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(255, 69, 58, 0.2);
+        }
+        
+        .badge-pending {
+            background: rgba(255, 159, 10, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(255, 159, 10, 0.2);
+        }
+        
+        .badge-running {
+            background: rgba(0, 122, 255, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+        }
+        
+        /* Wallet Address */
+        .wallet-address {
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            word-break: break-all;
+            margin-top: 8px;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+            
+            .header-content h1 {
+                font-size: 36px;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat {
+                font-size: 32px;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>node³</h1>
+                <p>Turn Your GPU Into Passive Income</p>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="status-badge">
+                    <span class="status-indicator status-running" id="status-indicator"></span>
+                    <span id="status-text">Running</span>
+                </div>
+                <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                    <div class="theme-toggle-icon" id="theme-icon">
+                        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </div>
+                    <span id="theme-text">Dark</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>Wallet Balance</h2>
+                <div class="stat" id="balance">0.0000 SOL</div>
+                <div class="wallet-address" id="wallet-address">Loading...</div>
+            </div>
+            
+            <div class="card">
+                <h2>Today's Earnings</h2>
+                <div class="stat" id="today-earnings">0.0000 SOL</div>
+                <div class="label">Total: <span id="total-earnings">0.0000 SOL</span></div>
+            </div>
+            
+            <div class="card">
+                <h2>Jobs Completed</h2>
+                <div class="stat" id="completed-jobs">0</div>
+                <div class="label"><span id="active-jobs">0</span> active</div>
+            </div>
+            
+            <div class="card">
+                <h2>Status</h2>
+                <div class="controls">
+                    <button class="button" onclick="startAgent()" id="start-btn">Start</button>
+                    <button class="button button-secondary" onclick="stopAgent()" id="stop-btn">Stop</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>GPU Information</h2>
+            <div class="gpu-list" id="gpu-list">
+                <div style="color: var(--text-tertiary); padding: 20px; text-align: center;">Loading...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Recent Jobs</h2>
+            <table class="jobs-table" id="jobs-table">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Reward</th>
+                        <th>Duration</th>
+                        <th>Completed</th>
+                    </tr>
+                </thead>
+                <tbody id="jobs-tbody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                            No jobs yet
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        let ws;
+        
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+            
+            ws.onclose = function() {
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function updateDashboard(data) {
+            // Update balance and earnings
+            const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance) || 0;
+            document.getElementById('balance').textContent = balance.toFixed(4) + ' SOL';
+            document.getElementById('wallet-address').textContent = data.wallet_address || 'Loading...';
+            
+            // Update status
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const statusBadge = document.getElementById('status-badge');
+            
+            if (data.status === 'running') {
+                statusIndicator.className = 'status-indicator status-running';
+                statusText.textContent = 'Running';
+            } else {
+                statusIndicator.className = 'status-indicator status-stopped';
+                statusText.textContent = 'Stopped';
+            }
+            
+            // Update jobs
+            document.getElementById('active-jobs').textContent = data.active_jobs;
+            document.getElementById('completed-jobs').textContent = data.completed_jobs;
+            
+            // Update GPU list
+            const gpuList = document.getElementById('gpu-list');
+            if (data.gpus && data.gpus.length > 0) {
+                gpuList.innerHTML = data.gpus.map(gpu => {
+                    const isAccurate = gpu.metrics_accurate || false;
+                    const tempLabel = isAccurate ? `${gpu.temperature}°C` : `~${gpu.temperature}°C`;
+                    const powerLabel = isAccurate ? `${gpu.power.toFixed(1)}W` : `~${gpu.power.toFixed(1)}W`;
+                    const utilization = gpu.utilization || 0;
+                    const memoryUsed = (gpu.memory_used / 1e9).toFixed(1);
+                    const memoryTotal = (gpu.memory / 1e9).toFixed(1);
+                    const memoryPercent = gpu.memory > 0 ? ((gpu.memory_used / gpu.memory) * 100).toFixed(0) : 0;
+                    
+                    return `
+                    <div class="gpu-card">
+                        <div class="gpu-name">${gpu.name || 'Unknown GPU'}</div>
+                        <div class="gpu-stats">
+                            <div class="gpu-stat">
+                                <span class="gpu-stat-label">Utilization</span>
+                                <span class="gpu-stat-value">${utilization}%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${utilization}%"></div>
+                                </div>
+                            </div>
+                            <div class="gpu-stat">
+                                <span class="gpu-stat-label">Temperature</span>
+                                <span class="gpu-stat-value">${tempLabel}</span>
+                            </div>
+                            <div class="gpu-stat">
+                                <span class="gpu-stat-label">Memory</span>
+                                <span class="gpu-stat-value">${memoryUsed}GB / ${memoryTotal}GB</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${memoryPercent}%"></div>
+                                </div>
+                            </div>
+                            <div class="gpu-stat">
+                                <span class="gpu-stat-label">Power</span>
+                                <span class="gpu-stat-value">${powerLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            } else {
+                gpuList.innerHTML = '<div style="color: var(--text-tertiary); padding: 20px; text-align: center;">No GPUs detected</div>';
+            }
+        }
+        
+        async function fetchEarnings() {
+            try {
+                const response = await fetch('/api/earnings');
+                const data = await response.json();
+                
+                document.getElementById('today-earnings').textContent = data.today_earnings.toFixed(4) + ' SOL';
+                document.getElementById('total-earnings').textContent = data.total_earnings.toFixed(4) + ' SOL';
+            } catch (error) {
+                console.error('Failed to fetch earnings:', error);
+            }
+        }
+        
+        async function fetchJobs() {
+            try {
+                const response = await fetch('/api/jobs');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('jobs-tbody');
+                
+                if (data.jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-tertiary); padding: 40px;">No jobs yet</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.jobs.reverse().map(job => `
+                    <tr>
+                        <td style="font-family: 'SF Mono', monospace; color: var(--text-secondary);">${job.job_id.substring(0, 8)}...</td>
+                        <td style="text-transform: capitalize;">${job.job_type}</td>
+                        <td><span class="badge badge-${job.status}">${job.status}</span></td>
+                        <td style="font-weight: 600;">${job.reward.toFixed(4)} SOL</td>
+                        <td>${job.duration ? job.duration.toFixed(0) + 's' : 'N/A'}</td>
+                        <td style="color: var(--text-tertiary);">${job.completed_at ? new Date(job.completed_at).toLocaleString() : 'N/A'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to fetch jobs:', error);
+            }
+        }
+        
+        async function startAgent() {
+            try {
+                await fetch('/api/start', { method: 'POST' });
+            } catch (error) {
+                console.error('Failed to start agent:', error);
+            }
+        }
+        
+        async function stopAgent() {
+            try {
+                await fetch('/api/stop', { method: 'POST' });
+            } catch (error) {
+                console.error('Failed to stop agent:', error);
+            }
+        }
+        
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+        }
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (theme === 'light') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+                themeText.textContent = 'Light';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+                themeText.textContent = 'Dark';
+            }
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+        
+        // Initialize
+        initTheme();
+        connectWebSocket();
+        setInterval(fetchEarnings, 5000);
+        setInterval(fetchJobs, 10000);
+        fetchEarnings();
+        fetchJobs();
+    </script>
+</body>
+</html>

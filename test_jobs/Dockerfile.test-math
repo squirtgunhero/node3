@@ -1,0 +1,13 @@
+# Math computation test container
+# Tests CPU-intensive mathematical operations
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN mkdir -p /input /output
+
+# Math computation script
+COPY math_test.py /app/math_test.py
+
+CMD ["python", "/app/math_test.py"]
+

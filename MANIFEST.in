@@ -1,0 +1,8 @@
+# MANIFEST.in
+include README.md
+include LICENSE
+include requirements.txt
+include .env.example
+recursive-include templates *.html
+recursive-include tests *.py
+

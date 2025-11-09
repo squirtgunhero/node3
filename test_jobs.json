@@ -1,0 +1,83 @@
+{
+  "test_jobs": [
+    {
+      "job_type": "computation",
+      "name": "Simple CPU Test",
+      "description": "Basic CPU-only test job that processes data",
+      "docker_image": "python:3.11-slim",
+      "gpu_memory_required": 0,
+      "cpu_required": 1,
+      "estimated_duration": 10,
+      "reward": 0.0001,
+      "command": [
+        "python",
+        "-c",
+        "import os, json, time; result = {'status': 'completed', 'job_id': os.getenv('JOB_ID', 'test'), 'computation_time': 5.0, 'processed_items': 100, 'timestamp': time.time()}; print(json.dumps(result)); open(os.path.join(os.getenv('OUTPUT_DIR', '/tmp/node3_output'), 'result.json'), 'w').write(json.dumps(result))"
+      ],
+      "environment": {},
+      "timeout": 60,
+      "requires_gpu": false
+    },
+    {
+      "job_type": "computation",
+      "name": "Math Computation Test",
+      "description": "CPU-intensive mathematical computation (pi approximation)",
+      "docker_image": "python:3.11-slim",
+      "gpu_memory_required": 0,
+      "cpu_required": 2,
+      "estimated_duration": 30,
+      "reward": 0.0002,
+      "command": [
+        "python",
+        "-c",
+        "import os, json, time; pi = 0.0; iterations = 5000000; start = time.time(); [pi := pi + (-1)**i / (2*i + 1) for i in range(iterations)]; pi *= 4; elapsed = time.time() - start; result = {'computation': 'pi_approximation', 'method': 'leibniz_formula', 'iterations': iterations, 'result': pi, 'elapsed_time': elapsed, 'status': 'completed'}; print(json.dumps(result)); open(os.path.join(os.getenv('OUTPUT_DIR', '/tmp/node3_output'), 'math_result.json'), 'w').write(json.dumps(result))"
+      ],
+      "environment": {},
+      "timeout": 120,
+      "requires_gpu": false
+    },
+    {
+      "job_type": "file_processing",
+      "name": "File Processing Test",
+      "description": "Processes input files and generates output",
+      "docker_image": "python:3.11-slim",
+      "gpu_memory_required": 0,
+      "cpu_required": 1,
+      "estimated_duration": 15,
+      "reward": 0.00015,
+      "command": [
+        "python",
+        "-c",
+        "import os, json; input_dir = os.getenv('INPUT_DIR', '/tmp/node3_input'); output_dir = os.getenv('OUTPUT_DIR', '/tmp/node3_output'); files_processed = []; import pathlib; input_path = pathlib.Path(input_dir); output_path = pathlib.Path(output_dir); output_path.mkdir(parents=True, exist_ok=True); files = list(input_path.glob('*')) if input_path.exists() else []; total = len([f for f in files if f.is_file()]); [files_processed.append({'filename': f.name, 'lines': len(f.read_text().split('\\n')), 'words': len(f.read_text().split()), 'characters': len(f.read_text()), 'processed': True}) if f.is_file() else None for f in files[:5]]; result = {'files_processed': files_processed, 'total_files': total, 'status': 'completed'}; print(json.dumps(result)); open(os.path.join(output_dir, 'processing_results.json'), 'w').write(json.dumps(result))"
+      ],
+      "environment": {},
+      "timeout": 90,
+      "requires_gpu": false
+    },
+    {
+      "job_type": "inference",
+      "name": "Python Script Test",
+      "description": "Simple Python script execution (no GPU required)",
+      "docker_image": "python:3.11-slim",
+      "gpu_memory_required": 0,
+      "cpu_required": 1,
+      "estimated_duration": 5,
+      "reward": 0.00005,
+      "command": [
+        "python",
+        "-c",
+        "import json, time, os; result = {'status': 'completed', 'job_id': os.getenv('JOB_ID', 'test'), 'timestamp': time.time()}; print(json.dumps(result)); open('/output/result.json', 'w').write(json.dumps(result))"
+      ],
+      "environment": {},
+      "timeout": 30,
+      "requires_gpu": false
+    }
+  ],
+  "build_instructions": {
+    "simple": "cd test_jobs && docker build -f Dockerfile.test-simple -t node3-test-simple:latest .",
+    "math": "cd test_jobs && docker build -f Dockerfile.test-math -t node3-test-math:latest .",
+    "file_process": "cd test_jobs && docker build -f Dockerfile.test-file-process -t node3-test-file-process:latest ."
+  }
+}
+
+

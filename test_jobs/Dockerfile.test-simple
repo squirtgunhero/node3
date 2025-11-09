@@ -1,0 +1,15 @@
+# Simple CPU-only test container
+# This is a minimal test container that runs simple Python computations
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Create input and output directories
+RUN mkdir -p /input /output
+
+# Simple test script that processes data
+COPY test_script.py /app/test_script.py
+
+# Entrypoint runs the test script
+CMD ["python", "/app/test_script.py"]
+
