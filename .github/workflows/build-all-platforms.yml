@@ -24,9 +24,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          # Install torch/numpy/tensorboard for PyInstaller analysis phase only
+          # Install numpy/tensorboard first (from PyPI)
+          pip install numpy tensorboard
+          # Install torch CPU-only for PyInstaller analysis phase only
           # They will be excluded from final executable via --exclude-module flags
-          pip install torch numpy tensorboard --index-url https://download.pytorch.org/whl/cpu
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
       
       - name: Build Windows executable
         run: python build_windows.py --no-installer
@@ -69,9 +71,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          # Install torch/numpy/tensorboard for PyInstaller analysis phase only
+          # Install numpy/tensorboard first (from PyPI)
+          pip install numpy tensorboard
+          # Install torch CPU-only for PyInstaller analysis phase only
           # They will be excluded from final executable via --exclude-module flags
-          pip install torch numpy tensorboard --index-url https://download.pytorch.org/whl/cpu
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
       
       - name: Build Linux executable
         run: python build_linux.py
@@ -119,9 +123,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-          # Install torch/numpy/tensorboard for PyInstaller analysis phase only
+          # Install numpy/tensorboard first (from PyPI)
+          pip install numpy tensorboard
+          # Install torch CPU-only for PyInstaller analysis phase only
           # They will be excluded from final executable via --exclude-module flags
-          pip install torch numpy tensorboard --index-url https://download.pytorch.org/whl/cpu
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
       
       - name: Build macOS app
         run: python build.py --type exe
