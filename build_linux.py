@@ -280,9 +280,9 @@ def main():
     version = get_version()
     
     print(f'''
-╔════════════════════════════════════════════════════════════╗
-║        Building node3 Agent for Linux v{version}            ║
-╚════════════════════════════════════════════════════════════╝
+{'='*60}
+    Building node3 Agent for Linux v{version}
+{'='*60}
 ''')
     
     # Step 1: Clean
