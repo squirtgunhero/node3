@@ -1,16 +1,8 @@
 # PyInstaller hook to SKIP torch entirely
-# This prevents PyInstaller from trying to analyze torch and its dependencies
+# This stub hook overrides PyInstaller's built-in torch hooks
+# Actual exclusion is handled by --exclude-module flags in build scripts
 
-# Tell PyInstaller to exclude torch and all its submodules
-excludedimports = [
-    'torch',
-    'torch.utils',
-    'torch.utils.tensorboard',
-    'tensorboard',
-    'numpy',  # Often imported by torch
-]
-
-# Return empty lists - nothing to import
+# Return empty lists - no imports, data, or binaries for torch
 hiddenimports = []
 datas = []
 binaries = []
