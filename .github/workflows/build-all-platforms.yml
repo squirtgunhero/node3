@@ -36,7 +36,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       
       - name: Upload Windows executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-executable-${{ steps.version.outputs.version }}
           path: dist/node3-agent.exe
@@ -83,7 +83,7 @@ jobs:
           cd ..
       
       - name: Upload Linux executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-executable-${{ steps.version.outputs.version }}
           path: dist/node3-agent-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz
@@ -127,7 +127,7 @@ jobs:
         run: bash create_dmg.sh
       
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-dmg-${{ steps.version.outputs.version }}
           path: "*.dmg"
