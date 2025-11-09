@@ -72,7 +72,6 @@ def build_executable():
         '--windowed',
         '--icon=icon.ico',  # Windows uses .ico
         '--add-data=templates;templates',
-        '--add-data=static;static',
         
         # Hidden imports
         '--hidden-import=uvicorn.logging',
