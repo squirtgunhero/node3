@@ -304,8 +304,12 @@ async def serve_table_dashboard():
         return f.read()
 
 if __name__ == "__main__":
+    import os
+    # Use Railway's PORT environment variable or default to 8888
+    port = int(os.environ.get("PORT", 8888))
+    
     print("🚀 Starting Node3 Telemetry Server")
-    print("📊 Dashboard: http://localhost:8888")
-    print("🔌 WebSocket: ws://localhost:8888/ws")
-    uvicorn.run(app, host="0.0.0.0", port=8888)
+    print(f"📊 Dashboard: http://0.0.0.0:{port}")
+    print(f"🔌 WebSocket: ws://0.0.0.0:{port}/ws")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
