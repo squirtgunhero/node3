@@ -13,12 +13,26 @@ GPU agent software for the node³ distributed compute network. Run this on your 
 
 ## Quick Start
 
-```bash
-# Download and run
-./node3-agent
+### Download Pre-built Binary (Recommended)
 
-# Or from source
-python main.py
+**macOS:**
+```bash
+curl -L -o node3-agent https://github.com/YOUR_USERNAME/node3-agent/releases/latest/download/node3-agent-macos
+chmod +x node3-agent
+./node3-agent
+```
+
+**Linux:**
+```bash
+curl -L -o node3-agent https://github.com/YOUR_USERNAME/node3-agent/releases/latest/download/node3-agent-linux
+chmod +x node3-agent
+./node3-agent
+```
+
+**Windows:**
+```powershell
+Invoke-WebRequest -Uri "https://github.com/YOUR_USERNAME/node3-agent/releases/latest/download/node3-agent-windows.exe" -OutFile "node3-agent.exe"
+.\node3-agent.exe
 ```
 
 Visit http://localhost:8080 to see your dashboard.
@@ -27,11 +41,13 @@ Visit http://localhost:8080 to see your dashboard.
 
 ### Option 1: Pre-built Binary (Easiest)
 
-Download from releases and run:
-```bash
-chmod +x node3-agent
-./node3-agent
-```
+1. Go to [Releases](https://github.com/YOUR_USERNAME/node3-agent/releases/latest)
+2. Download the binary for your platform:
+   - `node3-agent-macos` for macOS
+   - `node3-agent-linux` for Linux
+   - `node3-agent-windows.exe` for Windows
+3. Make it executable (macOS/Linux): `chmod +x node3-agent`
+4. Run it: `./node3-agent`
 
 ### Option 2: From Source
 

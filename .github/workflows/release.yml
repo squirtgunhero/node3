@@ -1,0 +1,148 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build macOS binary
+        run: python build.py
+      
+      - name: Create DMG (optional)
+        run: |
+          if [ -f create_dmg.sh ]; then
+            chmod +x create_dmg.sh
+            ./create_dmg.sh || echo "DMG creation skipped"
+          fi
+      
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: node3-agent-macos
+          path: dist/node3-agent
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build Linux binary
+        run: python build.py
+      
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: node3-agent-linux
+          path: dist/node3-agent
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build Windows binary
+        run: python build.py
+      
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: node3-agent-windows
+          path: dist/node3-agent.exe
+
+  create-release:
+    needs: [build-macos, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          # Rename binaries with platform suffix
+          mv node3-agent-macos/node3-agent release/node3-agent-macos || true
+          mv node3-agent-linux/node3-agent release/node3-agent-linux || true
+          mv node3-agent-windows/node3-agent.exe release/node3-agent-windows.exe || true
+          
+          # Create checksums
+          cd release
+          sha256sum * > checksums.txt
+          cd ..
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/*
+          body: |
+            ## Node3 Agent Release
+            
+            Download the appropriate binary for your platform:
+            
+            ### macOS
+            ```bash
+            curl -L -o node3-agent https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/node3-agent-macos
+            chmod +x node3-agent
+            ./node3-agent --help
+            ```
+            
+            ### Linux
+            ```bash
+            curl -L -o node3-agent https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/node3-agent-linux
+            chmod +x node3-agent
+            ./node3-agent --help
+            ```
+            
+            ### Windows
+            ```powershell
+            Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/node3-agent-windows.exe" -OutFile "node3-agent.exe"
+            .\node3-agent.exe --help
+            ```
+            
+            ### Verify Checksums
+            Check `checksums.txt` to verify your download.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
