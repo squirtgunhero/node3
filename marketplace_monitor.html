@@ -446,8 +446,8 @@
         <div class="header-content">
             <div class="logo">node³</div>
             <nav class="nav">
-                <a href="#" class="nav-link">Jobs</a>
-                <a href="#" class="nav-link active">Compute</a>
+                <a href="#" class="nav-link" onclick="switchTab('jobs'); return false;">Jobs</a>
+                <a href="#" class="nav-link active" onclick="switchTab('compute'); return false;">Compute</a>
             </nav>
             <div class="header-actions">
                 <div class="live-indicator">
@@ -491,25 +491,47 @@
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="filters-section">
-                <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="filterAgents('all')">All Providers</button>
-                    <button class="filter-tab" onclick="filterAgents('online')">NVIDIA</button>
-                    <button class="filter-tab" onclick="filterAgents('amd')">AMD</button>
-                    <button class="filter-tab" onclick="filterAgents('available')">Available</button>
+            <!-- Jobs View -->
+            <div id="jobs-view" style="display: none;">
+                <div class="filters-section">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filterJobs('all')">All Jobs</button>
+                        <button class="filter-tab" onclick="filterJobs('inference')">Inference</button>
+                        <button class="filter-tab" onclick="filterJobs('training')">Training</button>
+                    </div>
+                    <input type="text" class="search-box" placeholder="Search jobs..." id="jobs-search-box" oninput="filterJobs(currentJobFilter)">
                 </div>
-                <input type="text" class="search-box" placeholder="Search jobs, providers, or frameworks..." id="search-box" oninput="filterAgents(currentFilter)">
+
+                <div class="agents-grid" id="jobs-grid">
+                    <!-- Jobs populated here -->
+                </div>
+
+                <div id="jobs-empty-state" class="empty-state" style="display: none;">
+                    <h3>No Jobs Available</h3>
+                    <p>Check back soon for new compute jobs...</p>
+                </div>
             </div>
 
-            <!-- Agent Grid -->
-            <div class="agents-grid" id="agents-grid">
-                <!-- Dynamically populated -->
-            </div>
+            <!-- Compute View -->
+            <div id="compute-view">
+                <div class="filters-section">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filterAgents('all')">All Providers</button>
+                        <button class="filter-tab" onclick="filterAgents('nvidia')">NVIDIA</button>
+                        <button class="filter-tab" onclick="filterAgents('amd')">AMD</button>
+                        <button class="filter-tab" onclick="filterAgents('available')">Available</button>
+                    </div>
+                    <input type="text" class="search-box" placeholder="Search providers..." id="search-box" oninput="filterAgents(currentFilter)">
+                </div>
 
-            <div id="empty-state" class="empty-state" style="display: none;">
-                <h3>No Providers Found</h3>
-                <p>Waiting for GPU providers to join...</p>
+                <div class="agents-grid" id="agents-grid">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <h3>No Providers Found</h3>
+                    <p>Waiting for GPU providers to join...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -517,7 +539,146 @@
     <script>
         let ws = null;
         let currentFilter = 'all';
+        let currentJobFilter = 'all';
         let allAgents = [];
+        let currentTab = 'compute';
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show/hide views
+            if (tab === 'jobs') {
+                document.getElementById('compute-view').style.display = 'none';
+                document.getElementById('jobs-view').style.display = 'block';
+                loadJobs();
+            } else {
+                document.getElementById('jobs-view').style.display = 'none';
+                document.getElementById('compute-view').style.display = 'block';
+            }
+        }
+
+        // Load jobs
+        async function loadJobs() {
+            try {
+                // Mock jobs for now - you can connect this to your marketplace API
+                const mockJobs = [
+                    {
+                        id: 'job_001',
+                        name: 'training',
+                        framework: 'python:3.11-slim',
+                        reward: 0.0035,
+                        duration: 180,
+                        gpu_memory: 24,
+                        jobs_done: 211,
+                        rating: 4,
+                        type: 'training'
+                    },
+                    {
+                        id: 'job_002',
+                        name: 'inference',
+                        framework: 'pytorch:latest',
+                        reward: 0.0008,
+                        duration: 45,
+                        gpu_memory: 8,
+                        jobs_done: 456,
+                        rating: 5,
+                        type: 'inference'
+                    },
+                    {
+                        id: 'job_003',
+                        name: 'model-training',
+                        framework: 'tensorflow:2.x',
+                        reward: 0.0016,
+                        duration: 120,
+                        gpu_memory: 16,
+                        jobs_done: 89,
+                        rating: 4,
+                        type: 'training'
+                    }
+                ];
+                
+                renderJobs(mockJobs);
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        function filterJobs(filter) {
+            currentJobFilter = filter;
+            document.querySelectorAll('#jobs-view .filter-tab').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active');
+            loadJobs(); // Reload with filter
+        }
+
+        function renderJobs(jobs) {
+            const grid = document.getElementById('jobs-grid');
+            const emptyState = document.getElementById('jobs-empty-state');
+
+            if (jobs.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            grid.innerHTML = jobs.map(job => {
+                const stars = '⭐'.repeat(job.rating);
+                const ratePerHour = (job.reward / (job.duration / 3600)).toFixed(6);
+
+                return `
+                    <div class="agent-card">
+                        <div class="agent-header">
+                            <div class="agent-title">
+                                <div class="agent-name">${job.name}</div>
+                                <div class="agent-vendor">${job.framework}</div>
+                            </div>
+                            <div class="status-badge status-online">AVAILABLE</div>
+                        </div>
+                        
+                        <div class="agent-rating">
+                            <span class="stars">${stars}</span>
+                            <span class="rating-count">(${job.jobs_done})</span>
+                        </div>
+                        
+                        <div class="agent-stats">
+                            <div class="stat-row">
+                                <div class="stat-row-label">Reward</div>
+                                <div class="stat-row-value highlight">${job.reward} SOL</div>
+                            </div>
+                            
+                            <div class="stat-row">
+                                <div class="stat-row-label">Duration</div>
+                                <div class="stat-row-value">${job.duration}s</div>
+                            </div>
+                            
+                            <div class="stat-row">
+                                <div class="stat-row-label">GPU Memory</div>
+                                <div class="stat-row-value">${job.gpu_memory}.0 GB</div>
+                            </div>
+                            
+                            <div class="stat-row">
+                                <div class="stat-row-label">Rate</div>
+                                <div class="stat-row-value highlight">${ratePerHour} SOL/hr</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                            <div class="gpu-badge">GPU</div>
+                        </div>
+                        
+                        <button class="contact-btn">Accept</button>
+                    </div>
+                `;
+            }).join('');
+        }
 
         // Theme toggle
         function toggleTheme() {
@@ -595,7 +756,7 @@
             const searchTerm = document.getElementById('search-box').value.toLowerCase();
             let filtered = allAgents;
 
-            if (currentFilter === 'online') {
+            if (currentFilter === 'nvidia') {
                 filtered = allAgents.filter(a => a.gpu_vendor?.toLowerCase().includes('nvidia'));
             } else if (currentFilter === 'amd') {
                 filtered = allAgents.filter(a => a.gpu_vendor?.toLowerCase().includes('amd'));
