@@ -55,12 +55,20 @@ Open your browser to:
 http://localhost:8888
 ```
 
+**Marketplace View (Default):** Beautiful card-based grid layout
+**Table View:** http://localhost:8888/table - Classic table layout
+
 You'll see:
 - Total agents registered
-- Online agents count
+- Online agents count  
 - Jobs completed
 - SOL earned
-- Real-time table of all agents
+- Real-time cards/table of all agents with:
+  - Status badges with animations
+  - GPU information
+  - Location data
+  - MAC addresses
+  - Earnings tracking
 
 ### Step 3: Integrate Into Agent
 
