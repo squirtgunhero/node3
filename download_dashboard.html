@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node3 Agent - Download Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 36px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+    }
+
+    .stat-label {
+      color: #718096;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      color: #1a202c;
+      font-size: 36px;
+      font-weight: bold;
+    }
+
+    .stat-change {
+      color: #48bb78;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .chart-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a202c;
+      margin-bottom: 20px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .refresh-btn {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: #f7fafc;
+    }
+
+    .last-updated {
+      text-align: center;
+      color: white;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Node3 Agent Download Analytics</h1>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      Loading download statistics...
+    </div>
+
+    <div id="dashboard" style="display: none;">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Downloads</div>
+          <div class="stat-value" id="total-downloads">0</div>
+          <div class="stat-change">All time</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Latest Release</div>
+          <div class="stat-value" id="latest-version">-</div>
+          <div class="stat-change" id="latest-downloads">0 downloads</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Total Releases</div>
+          <div class="stat-value" id="total-releases">0</div>
+          <div class="stat-change">Published versions</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Most Popular</div>
+          <div class="stat-value" id="popular-platform">-</div>
+          <div class="stat-change" id="popular-count">0 downloads</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Downloads by Platform</div>
+        <canvas id="platformChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Downloads by Release</div>
+        <canvas id="releaseChart"></canvas>
+      </div>
+
+      <button class="refresh-btn" onclick="loadStats()">🔄 Refresh Data</button>
+      <div class="last-updated" id="last-updated"></div>
+    </div>
+  </div>
+
+  <script>
+    let platformChart = null;
+    let releaseChart = null;
+
+    async function loadStats() {
+      try {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
+
+        // Fetch all releases
+        const response = await fetch('https://api.github.com/repos/squirtgunhero/node3/releases');
+        const releases = await response.json();
+
+        // Calculate statistics
+        const stats = calculateStats(releases);
+
+        // Update UI
+        updateDashboard(stats);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        // Update last refreshed time
+        const now = new Date();
+        document.getElementById('last-updated').textContent = 
+          `Last updated: ${now.toLocaleString()}`;
+
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        document.getElementById('loading').innerHTML = 
+          '<div style="color: white;">❌ Error loading statistics. Please try again.</div>';
+      }
+    }
+
+    function calculateStats(releases) {
+      const stats = {
+        totalDownloads: 0,
+        totalReleases: releases.length,
+        platforms: { windows: 0, linux: 0, macos: 0, other: 0 },
+        releases: []
+      };
+
+      releases.forEach(release => {
+        let releaseDownloads = 0;
+        
+        release.assets.forEach(asset => {
+          const count = asset.download_count;
+          releaseDownloads += count;
+          
+          // Categorize by platform
+          const name = asset.name.toLowerCase();
+          if (name.includes('.exe') || name.includes('windows')) {
+            stats.platforms.windows += count;
+          } else if (name.includes('linux') || name.includes('.tar.gz')) {
+            stats.platforms.linux += count;
+          } else if (name.includes('.dmg') || name.includes('macos')) {
+            stats.platforms.macos += count;
+          } else {
+            stats.platforms.other += count;
+          }
+        });
+
+        stats.releases.push({
+          tag: release.tag_name,
+          downloads: releaseDownloads,
+          published: new Date(release.published_at)
+        });
+
+        stats.totalDownloads += releaseDownloads;
+      });
+
+      // Sort releases by date
+      stats.releases.sort((a, b) => b.published - a.published);
+
+      return stats;
+    }
+
+    function updateDashboard(stats) {
+      // Update stat cards
+      document.getElementById('total-downloads').textContent = 
+        stats.totalDownloads.toLocaleString();
+      
+      document.getElementById('total-releases').textContent = 
+        stats.totalReleases;
+
+      if (stats.releases.length > 0) {
+        const latest = stats.releases[0];
+        document.getElementById('latest-version').textContent = latest.tag;
+        document.getElementById('latest-downloads').textContent = 
+          `${latest.downloads.toLocaleString()} downloads`;
+      }
+
+      // Find most popular platform
+      const platforms = stats.platforms;
+      const mostPopular = Object.entries(platforms)
+        .filter(([_, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1])[0];
+      
+      if (mostPopular) {
+        document.getElementById('popular-platform').textContent = 
+          mostPopular[0].charAt(0).toUpperCase() + mostPopular[0].slice(1);
+        document.getElementById('popular-count').textContent = 
+          `${mostPopular[1].toLocaleString()} downloads`;
+      }
+
+      // Update charts
+      updatePlatformChart(stats.platforms);
+      updateReleaseChart(stats.releases.slice(0, 10)); // Last 10 releases
+    }
+
+    function updatePlatformChart(platforms) {
+      const ctx = document.getElementById('platformChart').getContext('2d');
+      
+      if (platformChart) {
+        platformChart.destroy();
+      }
+
+      const data = Object.entries(platforms)
+        .filter(([_, count]) => count > 0);
+
+      platformChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: data.map(([platform]) => 
+            platform.charAt(0).toUpperCase() + platform.slice(1)
+          ),
+          datasets: [{
+            data: data.map(([_, count]) => count),
+            backgroundColor: [
+              '#667eea',
+              '#764ba2',
+              '#f093fb',
+              '#4facfe'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    function updateReleaseChart(releases) {
+      const ctx = document.getElementById('releaseChart').getContext('2d');
+      
+      if (releaseChart) {
+        releaseChart.destroy();
+      }
+
+      releaseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: releases.map(r => r.tag),
+          datasets: [{
+            label: 'Downloads',
+            data: releases.map(r => r.downloads),
+            backgroundColor: '#667eea'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Load stats on page load
+    loadStats();
+
+    // Auto-refresh every 5 minutes
+    setInterval(loadStats, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
+
