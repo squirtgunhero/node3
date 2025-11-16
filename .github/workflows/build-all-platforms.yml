@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  packages: write
+  deployments: write
 
 jobs:
   build-windows:
@@ -57,6 +59,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/node3-agent.exe
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -109,6 +114,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/node3-agent-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -175,6 +183,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: "*.dmg"
+          fail_on_unmatched_files: false
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
