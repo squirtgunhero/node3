@@ -15,6 +15,7 @@ from docker_manager import DockerManager
 from job_manager import JobManager
 from payment_module import PaymentModule
 from dashboard import Dashboard
+from agent_telemetry import AgentTelemetry
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +27,8 @@ WALLET_PATH = os.getenv("WALLET_PATH", "./wallet.json")
 SOLANA_RPC_URL = os.getenv("SOLANA_RPC_URL", "https://api.devnet.solana.com")
 DASHBOARD_PORT = int(os.getenv("DASHBOARD_PORT", "8080"))
 SKIP_GPU_CHECK = os.getenv("SKIP_GPU_CHECK", "false").lower() == "true"
+TELEMETRY_ENABLED = os.getenv("TELEMETRY_ENABLED", "true").lower() == "true"
+TELEMETRY_URL = os.getenv("TELEMETRY_URL", "https://node3-production-16ca.up.railway.app")
 
 async def main():
     """Main application entry point"""
@@ -84,6 +87,34 @@ async def main():
             benchmark = gpu_detector.benchmark_gpu(gpu.index)
             if benchmark:
                 logger.info(f"Performance: {benchmark.get('tflops', 0):.2f} TFLOPS")
+        
+        # 1.5. Initialize Telemetry (optional)
+        telemetry = None
+        if TELEMETRY_ENABLED:
+            try:
+                logger.info("Initializing telemetry...")
+                telemetry = AgentTelemetry(telemetry_url=TELEMETRY_URL)
+                
+                # Register agent with telemetry server
+                primary_gpu = gpus[0] if gpus else None
+                if primary_gpu:
+                    gpu_info_telemetry = {
+                        'vendor': primary_gpu.vendor,
+                        'name': primary_gpu.name,
+                        'total_memory': primary_gpu.total_memory,
+                        'count': len(gpus)
+                    }
+                    telemetry.register(gpu_info_telemetry, agent_version=VERSION)
+                    telemetry.log_event('agent_started', {
+                        'version': VERSION,
+                        'gpu_count': len(gpus),
+                        'has_docker': docker_manager is not None
+                    })
+                    logger.info("✓ Telemetry initialized")
+            except Exception as e:
+                logger.warning(f"Telemetry initialization failed: {e}")
+                logger.warning("Continuing without telemetry...")
+                telemetry = None
             
         # 2. Initialize Docker Manager
         logger.info("Initializing Docker manager...")
@@ -137,7 +168,8 @@ async def main():
             },
             docker_manager=docker_manager,  # Optional - native execution works without it
             use_native_execution=True,  # Always enable native execution
-            payment_module=payment_module  # For wallet address and payment tracking
+            payment_module=payment_module,  # For wallet address and payment tracking
+            telemetry=telemetry  # Optional telemetry reporting
         )
         
         # 5. Start Dashboard

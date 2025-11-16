@@ -46,16 +46,20 @@ class JobManager:
                  gpu_info: Dict,
                  docker_manager,
                  use_native_execution: bool = True,
-                 payment_module = None):
+                 payment_module = None,
+                 telemetry = None):
         self.marketplace_url = marketplace_url
         self.api_key = api_key
         self.gpu_info = gpu_info
         self.docker_manager = docker_manager
         self.use_native_execution = use_native_execution
         self.payment_module = payment_module  # For wallet address
+        self.telemetry = telemetry  # For telemetry reporting
         self.active_jobs: List[Job] = []
         self.job_history: List[Job] = []
         self.is_running = False
+        self.total_jobs_completed = 0
+        self.total_earnings = 0.0
         
         # Initialize native executor as fallback
         if use_native_execution:
@@ -106,7 +110,8 @@ class JobManager:
                 await asyncio.sleep(30)
                 
     async def send_heartbeat(self):
-        """Send heartbeat to marketplace to indicate agent is alive"""
+        """Send heartbeat to marketplace and telemetry server"""
+        # Send to marketplace
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -122,6 +127,18 @@ class JobManager:
                     
         except Exception as e:
             logger.debug(f"Error sending heartbeat: {e}")
+        
+        # Send to telemetry server
+        if self.telemetry:
+            try:
+                status = 'working' if len(self.active_jobs) > 0 else 'online'
+                self.telemetry.send_heartbeat(
+                    status=status,
+                    total_jobs=self.total_jobs_completed,
+                    total_earnings=self.total_earnings
+                )
+            except Exception as e:
+                logger.debug(f"Error sending telemetry heartbeat: {e}")
     
     async def poll_marketplace(self):
         """Poll marketplace for available jobs
@@ -300,6 +317,22 @@ class JobManager:
                 # Report success
                 await self.report_job_success(job)
                 
+                # Update telemetry stats
+                self.total_jobs_completed += 1
+                self.total_earnings += job.reward
+                
+                # Log telemetry event
+                if self.telemetry:
+                    try:
+                        self.telemetry.log_event('job_completed', {
+                            'job_id': job.job_id,
+                            'job_type': job.job_type,
+                            'reward': job.reward,
+                            'duration': (job.completed_at - job.started_at).total_seconds() if job.started_at else 0
+                        })
+                    except Exception as e:
+                        logger.debug(f"Error logging telemetry event: {e}")
+                
                 # Move to history
                 self.active_jobs.remove(job)
                 self.job_history.append(job)
@@ -314,6 +347,17 @@ class JobManager:
             job.status = JobStatus.FAILED
             job.error_message = str(e)
             job.completed_at = datetime.now()
+            
+            # Log telemetry event for failure
+            if self.telemetry:
+                try:
+                    self.telemetry.log_event('job_failed', {
+                        'job_id': job.job_id,
+                        'job_type': job.job_type,
+                        'error': str(e)
+                    })
+                except Exception as telemetry_error:
+                    logger.debug(f"Error logging telemetry event: {telemetry_error}")
             
             # Remove job from active list first to prevent it from being stuck
             # even if report_job_failure fails
