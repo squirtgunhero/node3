@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>node³ - Agent Monitor</title>
+    <title>Node3 Admin Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -20,12 +20,9 @@
             --text-secondary: #666666;
             --text-tertiary: #999999;
             --accent: #000000;
-            --badge-bg: #f5f5f5;
-            --badge-text: #666666;
-            --online-bg: #d1fae5;
-            --online-text: #065f46;
-            --gpu-bg: #fef3c7;
-            --gpu-text: #92400e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
         }
         
         :root[data-theme="dark"] {
@@ -37,12 +34,9 @@
             --text-secondary: #a0a0a0;
             --text-tertiary: #666666;
             --accent: #ffffff;
-            --badge-bg: #2a2a2a;
-            --badge-text: #a0a0a0;
-            --online-bg: rgba(16, 185, 129, 0.15);
-            --online-text: #10b981;
-            --gpu-bg: rgba(245, 158, 11, 0.15);
-            --gpu-text: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
         }
         
         body {
@@ -63,7 +57,7 @@
         }
         
         .header-content {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
@@ -73,34 +67,40 @@
         
         .logo {
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-primary);
-        }
-        
-        .nav {
-            display: flex;
-            gap: 32px;
-        }
-        
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            padding-bottom: 20px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-        
-        .nav-link.active {
-            color: var(--text-primary);
-            border-bottom-color: var(--text-primary);
         }
         
         .header-actions {
             display: flex;
             gap: 16px;
             align-items: center;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .theme-toggle {
@@ -118,22 +118,38 @@
         }
         
         .theme-toggle:hover {
-            background: var(--badge-bg);
+            background: var(--bg-primary);
         }
         
         /* Container */
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 40px;
+        }
+        
+        /* Page Title */
+        .page-title {
+            margin-bottom: 32px;
+        }
+        
+        .page-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .page-title p {
+            font-size: 14px;
+            color: var(--text-secondary);
         }
         
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
         
         .stat-card {
@@ -141,7 +157,6 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 24px;
-            transition: all 0.2s;
         }
         
         .stat-label {
@@ -165,22 +180,33 @@
             color: var(--text-tertiary);
         }
         
-        /* Filters */
-        .filters-section {
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
             margin-bottom: 24px;
+        }
+        
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
+            margin-bottom: 24px;
         }
         
-        .filter-tabs {
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .section-actions {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
         
-        .filter-tab {
+        .filter-btn {
             padding: 8px 16px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -192,189 +218,125 @@
             transition: all 0.2s;
         }
         
-        .filter-tab:hover {
-            background: var(--badge-bg);
+        .filter-btn:hover {
+            background: var(--bg-primary);
         }
         
-        .filter-tab.active {
+        .filter-btn.active {
             background: var(--accent);
             color: var(--bg-primary);
             border-color: var(--accent);
         }
         
         .search-box {
-            padding: 10px 16px;
+            padding: 8px 16px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--bg-card);
             color: var(--text-primary);
-            font-size: 14px;
-            outline: none;
-            min-width: 280px;
-            transition: all 0.2s;
-        }
-        
-        .search-box:focus {
-            border-color: var(--text-secondary);
-        }
-        
-        .search-box::placeholder {
-            color: var(--text-tertiary);
-        }
-        
-        /* Agent Grid */
-        .agents-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-        
-        .agent-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .agent-card:hover {
-            border-color: var(--text-secondary);
-        }
-        
-        .agent-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-        
-        .agent-title {
-            flex: 1;
-        }
-        
-        .agent-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-        }
-        
-        .agent-vendor {
             font-size: 13px;
+            outline: none;
+            min-width: 250px;
+        }
+        
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-primary);
+        }
+        
+        tbody td {
+            padding: 16px;
+            font-size: 13px;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+        
+        .status-offline .status-dot {
+            background: var(--error);
+        }
+        
+        .mac-address {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
             color: var(--text-secondary);
         }
         
-        .status-badge {
-            padding: 6px 12px;
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--bg-primary);
             border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .gpu-chip {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         
-        .status-online {
-            background: var(--online-bg);
-            color: var(--online-text);
+        .location {
+            font-size: 12px;
+            color: var(--text-secondary);
         }
         
-        .status-working {
-            background: var(--gpu-bg);
-            color: var(--gpu-text);
-        }
-        
-        .status-offline {
-            background: var(--badge-bg);
-            color: var(--badge-text);
-        }
-        
-        .agent-rating {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .stars {
-            color: #fbbf24;
-            font-size: 14px;
-        }
-        
-        .rating-count {
+        .timestamp {
             font-size: 12px;
             color: var(--text-tertiary);
         }
         
-        .agent-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px 24px;
-        }
-        
-        .stat-row {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .stat-row-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .stat-row-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .stat-row-value.highlight {
-            color: var(--online-text);
-        }
-        
-        .gpu-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            background: var(--gpu-bg);
-            color: var(--gpu-text);
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .contact-btn {
-            margin-top: 20px;
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .contact-btn:hover {
-            opacity: 0.9;
-        }
-        
         .empty-state {
             text-align: center;
-            padding: 80px 20px;
+            padding: 60px 20px;
             color: var(--text-secondary);
         }
         
         .loading {
             text-align: center;
-            padding: 80px 20px;
+            padding: 60px 20px;
             color: var(--text-secondary);
         }
         
@@ -392,31 +354,6 @@
             to { transform: rotate(360deg); }
         }
         
-        .live-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: var(--online-bg);
-            color: var(--online-text);
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .pulse-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--online-text);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
         @media (max-width: 768px) {
             .header {
                 padding: 0 20px;
@@ -430,12 +367,12 @@
                 grid-template-columns: 1fr;
             }
             
-            .agents-grid {
-                grid-template-columns: 1fr;
+            .section {
+                padding: 20px;
             }
             
-            .search-box {
-                min-width: 100%;
+            .table-container {
+                font-size: 11px;
             }
         }
     </style>
@@ -444,11 +381,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div class="logo">node³</div>
-            <nav class="nav">
-                <a href="#" class="nav-link" onclick="switchTab('jobs'); return false;">Jobs</a>
-                <a href="#" class="nav-link active" onclick="switchTab('compute'); return false;">Compute</a>
-            </nav>
+            <div class="logo">node³ Admin</div>
             <div class="header-actions">
                 <div class="live-indicator">
                     <span class="pulse-dot"></span>
@@ -462,75 +395,81 @@
     </header>
 
     <div class="container">
+        <div class="page-title">
+            <h1>Agent Network Monitor</h1>
+            <p>Real-time monitoring of agent downloads, installations, and network status</p>
+        </div>
+
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>Loading agent network...</p>
+            <p>Loading network data...</p>
         </div>
 
         <div id="dashboard" style="display: none;">
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Available Jobs</div>
-                    <div class="stat-value" id="available-jobs">0</div>
+                    <div class="stat-label">Total Downloads</div>
+                    <div class="stat-value" id="total-downloads">0</div>
+                    <div class="stat-change">All-time agent downloads</div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-label">Active Agents</div>
                     <div class="stat-value" id="active-agents">0</div>
+                    <div class="stat-change" id="online-percentage">0% online now</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-label">GPU Providers</div>
-                    <div class="stat-value" id="gpu-providers">0</div>
+                    <div class="stat-label">Total Jobs</div>
+                    <div class="stat-value" id="total-jobs">0</div>
+                    <div class="stat-change">Completed successfully</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-label">Avg Reward</div>
-                    <div class="stat-value" id="avg-reward">0 SOL</div>
+                    <div class="stat-label">Total Earned</div>
+                    <div class="stat-value" id="total-earned">0 SOL</div>
+                    <div class="stat-change">Network earnings</div>
                 </div>
             </div>
 
-            <!-- Jobs View -->
-            <div id="jobs-view" style="display: none;">
-                <div class="filters-section">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" onclick="filterJobs('all')">All Jobs</button>
-                        <button class="filter-tab" onclick="filterJobs('inference')">Inference</button>
-                        <button class="filter-tab" onclick="filterJobs('training')">Training</button>
+            <!-- Agent Table -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Agent Installations</h2>
+                    <div class="section-actions">
+                        <button class="filter-btn active" onclick="filterAgents('all')">All</button>
+                        <button class="filter-btn" onclick="filterAgents('online')">Online</button>
+                        <button class="filter-btn" onclick="filterAgents('offline')">Offline</button>
+                        <input type="text" class="search-box" placeholder="Search by hostname, MAC, GPU..." id="search-box" oninput="filterAgents(currentFilter)">
                     </div>
-                    <input type="text" class="search-box" placeholder="Search jobs..." id="jobs-search-box" oninput="filterJobs(currentJobFilter)">
                 </div>
 
-                <div class="agents-grid" id="jobs-grid">
-                    <!-- Jobs populated here -->
-                </div>
-
-                <div id="jobs-empty-state" class="empty-state" style="display: none;">
-                    <h3>No Jobs Available</h3>
-                    <p>Check back soon for new compute jobs...</p>
-                </div>
-            </div>
-
-            <!-- Compute View -->
-            <div id="compute-view">
-                <div class="filters-section">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" onclick="filterAgents('all')">All Providers</button>
-                        <button class="filter-tab" onclick="filterAgents('nvidia')">NVIDIA</button>
-                        <button class="filter-tab" onclick="filterAgents('amd')">AMD</button>
-                        <button class="filter-tab" onclick="filterAgents('available')">Available</button>
-                    </div>
-                    <input type="text" class="search-box" placeholder="Search providers..." id="search-box" oninput="filterAgents(currentFilter)">
-                </div>
-
-                <div class="agents-grid" id="agents-grid">
-                    <!-- Dynamically populated -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Hostname</th>
+                                <th>MAC Address</th>
+                                <th>Platform</th>
+                                <th>GPU</th>
+                                <th>Memory</th>
+                                <th>Location</th>
+                                <th>Jobs</th>
+                                <th>Earned</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agents-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
                 </div>
 
                 <div id="empty-state" class="empty-state" style="display: none;">
-                    <h3>No Providers Found</h3>
-                    <p>Waiting for GPU providers to join...</p>
+                    <h3>No Agents Found</h3>
+                    <p>Waiting for agent installations...</p>
                 </div>
             </div>
         </div>
@@ -539,146 +478,7 @@
     <script>
         let ws = null;
         let currentFilter = 'all';
-        let currentJobFilter = 'all';
         let allAgents = [];
-        let currentTab = 'compute';
-
-        // Tab switching
-        function switchTab(tab) {
-            currentTab = tab;
-            
-            // Update nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // Show/hide views
-            if (tab === 'jobs') {
-                document.getElementById('compute-view').style.display = 'none';
-                document.getElementById('jobs-view').style.display = 'block';
-                loadJobs();
-            } else {
-                document.getElementById('jobs-view').style.display = 'none';
-                document.getElementById('compute-view').style.display = 'block';
-            }
-        }
-
-        // Load jobs
-        async function loadJobs() {
-            try {
-                // Mock jobs for now - you can connect this to your marketplace API
-                const mockJobs = [
-                    {
-                        id: 'job_001',
-                        name: 'training',
-                        framework: 'python:3.11-slim',
-                        reward: 0.0035,
-                        duration: 180,
-                        gpu_memory: 24,
-                        jobs_done: 211,
-                        rating: 4,
-                        type: 'training'
-                    },
-                    {
-                        id: 'job_002',
-                        name: 'inference',
-                        framework: 'pytorch:latest',
-                        reward: 0.0008,
-                        duration: 45,
-                        gpu_memory: 8,
-                        jobs_done: 456,
-                        rating: 5,
-                        type: 'inference'
-                    },
-                    {
-                        id: 'job_003',
-                        name: 'model-training',
-                        framework: 'tensorflow:2.x',
-                        reward: 0.0016,
-                        duration: 120,
-                        gpu_memory: 16,
-                        jobs_done: 89,
-                        rating: 4,
-                        type: 'training'
-                    }
-                ];
-                
-                renderJobs(mockJobs);
-            } catch (error) {
-                console.error('Error loading jobs:', error);
-            }
-        }
-
-        function filterJobs(filter) {
-            currentJobFilter = filter;
-            document.querySelectorAll('#jobs-view .filter-tab').forEach(btn => btn.classList.remove('active'));
-            event?.target?.classList.add('active');
-            loadJobs(); // Reload with filter
-        }
-
-        function renderJobs(jobs) {
-            const grid = document.getElementById('jobs-grid');
-            const emptyState = document.getElementById('jobs-empty-state');
-
-            if (jobs.length === 0) {
-                grid.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-
-            grid.innerHTML = jobs.map(job => {
-                const stars = '⭐'.repeat(job.rating);
-                const ratePerHour = (job.reward / (job.duration / 3600)).toFixed(6);
-
-                return `
-                    <div class="agent-card">
-                        <div class="agent-header">
-                            <div class="agent-title">
-                                <div class="agent-name">${job.name}</div>
-                                <div class="agent-vendor">${job.framework}</div>
-                            </div>
-                            <div class="status-badge status-online">AVAILABLE</div>
-                        </div>
-                        
-                        <div class="agent-rating">
-                            <span class="stars">${stars}</span>
-                            <span class="rating-count">(${job.jobs_done})</span>
-                        </div>
-                        
-                        <div class="agent-stats">
-                            <div class="stat-row">
-                                <div class="stat-row-label">Reward</div>
-                                <div class="stat-row-value highlight">${job.reward} SOL</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">Duration</div>
-                                <div class="stat-row-value">${job.duration}s</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">GPU Memory</div>
-                                <div class="stat-row-value">${job.gpu_memory}.0 GB</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">Rate</div>
-                                <div class="stat-row-value highlight">${ratePerHour} SOL/hr</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                            <div class="gpu-badge">GPU</div>
-                        </div>
-                        
-                        <button class="contact-btn">Accept</button>
-                    </div>
-                `;
-            }).join('');
-        }
 
         // Theme toggle
         function toggleTheme() {
@@ -733,14 +533,16 @@
         }
 
         function updateDashboard(stats, agents) {
-            document.getElementById('available-jobs').textContent = stats.total_jobs || 0;
+            // Update stats
+            document.getElementById('total-downloads').textContent = stats.total_agents;
             document.getElementById('active-agents').textContent = stats.online_agents;
-            document.getElementById('gpu-providers').textContent = stats.total_agents;
+            document.getElementById('total-jobs').textContent = stats.total_jobs.toLocaleString();
+            document.getElementById('total-earned').textContent = stats.total_earnings.toFixed(4) + ' SOL';
             
-            const avgReward = stats.total_agents > 0 
-                ? (stats.total_earnings / stats.total_agents).toFixed(4)
-                : '0.0000';
-            document.getElementById('avg-reward').textContent = `${avgReward} SOL`;
+            const onlinePercentage = stats.total_agents > 0 
+                ? ((stats.online_agents / stats.total_agents) * 100).toFixed(1)
+                : 0;
+            document.getElementById('online-percentage').textContent = `${onlinePercentage}% online now`;
 
             allAgents = agents;
             filterAgents(currentFilter);
@@ -749,24 +551,23 @@
         function filterAgents(filter) {
             if (filter !== 'search') {
                 currentFilter = filter;
-                document.querySelectorAll('.filter-tab').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 event?.target?.classList.add('active');
             }
 
             const searchTerm = document.getElementById('search-box').value.toLowerCase();
             let filtered = allAgents;
 
-            if (currentFilter === 'nvidia') {
-                filtered = allAgents.filter(a => a.gpu_vendor?.toLowerCase().includes('nvidia'));
-            } else if (currentFilter === 'amd') {
-                filtered = allAgents.filter(a => a.gpu_vendor?.toLowerCase().includes('amd'));
-            } else if (currentFilter === 'available') {
-                filtered = allAgents.filter(a => a.status === 'online');
+            if (currentFilter === 'online') {
+                filtered = allAgents.filter(a => a.status === 'online' || a.status === 'working');
+            } else if (currentFilter === 'offline') {
+                filtered = allAgents.filter(a => a.status === 'offline');
             }
 
             if (searchTerm) {
                 filtered = filtered.filter(a => 
                     a.hostname.toLowerCase().includes(searchTerm) ||
+                    a.mac_address.toLowerCase().includes(searchTerm) ||
                     a.gpu_model.toLowerCase().includes(searchTerm) ||
                     a.gpu_vendor.toLowerCase().includes(searchTerm)
                 );
@@ -776,76 +577,68 @@
         }
 
         function renderAgents(agents) {
-            const grid = document.getElementById('agents-grid');
+            const tbody = document.getElementById('agents-tbody');
             const emptyState = document.getElementById('empty-state');
 
             if (agents.length === 0) {
-                grid.innerHTML = '';
+                tbody.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
 
             emptyState.style.display = 'none';
 
-            grid.innerHTML = agents.map(agent => {
-                const statusClass = agent.status === 'working' ? 'status-working' 
-                    : agent.status === 'online' ? 'status-online' 
-                    : 'status-offline';
-                const statusText = agent.status === 'online' ? 'ONLINE' : agent.status.toUpperCase();
+            tbody.innerHTML = agents.map(agent => {
+                const isOnline = agent.status === 'online' || agent.status === 'working';
+                const statusClass = isOnline ? 'status-online' : 'status-offline';
+                
+                const platformIcon = {
+                    'Windows': '🪟',
+                    'Linux': '🐧',
+                    'Darwin': '🍎'
+                }[agent.platform] || '💻';
+
+                const lastSeen = new Date(agent.last_seen);
+                const diffMs = Date.now() - lastSeen;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+
+                let lastSeenText;
+                if (diffMins < 1) lastSeenText = 'Just now';
+                else if (diffMins < 60) lastSeenText = `${diffMins}m ago`;
+                else if (diffHours < 24) lastSeenText = `${diffHours}h ago`;
+                else lastSeenText = lastSeen.toLocaleDateString();
+
+                const location = agent.city && agent.country 
+                    ? `${agent.city}, ${agent.country}`
+                    : agent.country || 'Unknown';
 
                 const gpuMemoryGB = (agent.gpu_memory / 1e9).toFixed(0);
-                const ratePerHour = (agent.total_earnings / (agent.total_jobs || 1)).toFixed(6);
-
-                // Calculate uptime percentage
-                const uptimePercent = agent.status === 'online' ? '98%' : '85%';
-
-                // Generate star rating (4 stars for this example)
-                const stars = '⭐⭐⭐⭐';
-                const ratingCount = agent.total_jobs || Math.floor(Math.random() * 200);
 
                 return `
-                    <div class="agent-card">
-                        <div class="agent-header">
-                            <div class="agent-title">
-                                <div class="agent-name">${agent.hostname}</div>
-                                <div class="agent-vendor">${agent.gpu_vendor}</div>
-                            </div>
-                            <div class="status-badge ${statusClass}">${statusText}</div>
-                        </div>
-                        
-                        <div class="agent-rating">
-                            <span class="stars">${stars}</span>
-                            <span class="rating-count">(${ratingCount})</span>
-                        </div>
-                        
-                        <div class="agent-stats">
-                            <div class="stat-row">
-                                <div class="stat-row-label">Memory</div>
-                                <div class="stat-row-value">${gpuMemoryGB} GB</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">Jobs Done</div>
-                                <div class="stat-row-value">${agent.total_jobs}</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">Uptime</div>
-                                <div class="stat-row-value">${uptimePercent}</div>
-                            </div>
-                            
-                            <div class="stat-row">
-                                <div class="stat-row-label">Rate</div>
-                                <div class="stat-row-value highlight">${ratePerHour} SOL/hr</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                            <div class="gpu-badge">${agent.platform || 'CUDA'}</div>
-                        </div>
-                        
-                        <button class="contact-btn">Contact</button>
-                    </div>
+                    <tr>
+                        <td class="${statusClass}">
+                            <span class="status-dot"></span>
+                            ${isOnline ? 'Online' : 'Offline'}
+                        </td>
+                        <td><strong>${agent.hostname}</strong></td>
+                        <td><span class="mac-address">${agent.mac_address}</span></td>
+                        <td>
+                            <span class="platform-badge">
+                                <span>${platformIcon}</span>
+                                ${agent.platform}
+                            </span>
+                        </td>
+                        <td>
+                            <div><strong>${agent.gpu_vendor}</strong></div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">${agent.gpu_model.substring(0, 30)}${agent.gpu_model.length > 30 ? '...' : ''}</div>
+                        </td>
+                        <td><span class="gpu-chip">${gpuMemoryGB} GB</span></td>
+                        <td><span class="location">${location}</span></td>
+                        <td>${agent.total_jobs}</td>
+                        <td>◎${agent.total_earnings.toFixed(4)}</td>
+                        <td><span class="timestamp">${lastSeenText}</span></td>
+                    </tr>
                 `;
             }).join('');
         }
