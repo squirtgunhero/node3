@@ -294,6 +294,12 @@ async def broadcast_update():
 # Serve the dashboard HTML
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard():
+    with open('marketplace_monitor.html', 'r') as f:
+        return f.read()
+
+# Alternative dashboard (table view)
+@app.get("/table", response_class=HTMLResponse)
+async def serve_table_dashboard():
     with open('admin_dashboard.html', 'r') as f:
         return f.read()
 
