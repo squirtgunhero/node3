@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Node3 Agent - Example</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .download-container {
+      background: white;
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: #1a202c;
+    }
+
+    .subtitle {
+      color: #718096;
+      margin-bottom: 32px;
+      font-size: 16px;
+    }
+
+    .version-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 12px;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+
+    .version-badge {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .download-stats {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .download-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 18px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .download-btn svg {
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .other-platforms {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .other-platforms summary {
+      cursor: pointer;
+      color: #667eea;
+      font-weight: 600;
+      margin-bottom: 12px;
+      list-style: none;
+    }
+
+    .other-platforms summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .platform-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .platform-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #4a5568;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .platform-link:hover {
+      border-color: #667eea;
+      background-color: #f7fafc;
+    }
+
+    .platform-icon {
+      font-size: 24px;
+    }
+
+    .requirements {
+      margin-top: 32px;
+      padding: 16px;
+      background: #fff5f5;
+      border-left: 4px solid #fc8181;
+      border-radius: 4px;
+    }
+
+    .requirements h3 {
+      color: #c53030;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .requirements ul {
+      list-style: none;
+      color: #742a2a;
+      font-size: 14px;
+    }
+
+    .requirements li::before {
+      content: "✓ ";
+      color: #48bb78;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #718096;
+      padding: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="download-container">
+    <h1>Download Node3 Agent</h1>
+    <p class="subtitle">Start earning SOL by sharing your GPU power</p>
+
+    <div class="version-info" id="version-info">
+      <div class="spinner"></div>
+      <span class="loading">Loading latest version...</span>
+    </div>
+
+    <a href="#" id="primary-download" class="download-btn" style="display: none;">
+      <span id="download-text">Download for Your Platform</span>
+    </a>
+
+    <details class="other-platforms">
+      <summary>Download for other platforms ↓</summary>
+      <div class="platform-links">
+        <a href="https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-macos" 
+           class="platform-link" 
+           download>
+          <span class="platform-icon">🍎</span>
+          <span>macOS</span>
+        </a>
+        <a href="https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-linux" 
+           class="platform-link"
+           download>
+          <span class="platform-icon">🐧</span>
+          <span>Linux</span>
+        </a>
+        <a href="https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-windows.exe" 
+           class="platform-link"
+           download>
+          <span class="platform-icon">🪟</span>
+          <span>Windows</span>
+        </a>
+      </div>
+    </details>
+
+    <div class="requirements">
+      <h3>System Requirements</h3>
+      <ul>
+        <li>GPU: NVIDIA, AMD, Apple Silicon, or Intel</li>
+        <li>RAM: 4GB minimum (8GB recommended)</li>
+        <li>Storage: 1GB free space</li>
+        <li>Network: Internet connection</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Platform detection
+    function detectPlatform() {
+      const userAgent = window.navigator.userAgent;
+      const platform = window.navigator.platform;
+      const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'];
+      const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
+
+      if (macosPlatforms.indexOf(platform) !== -1) {
+        return {
+          name: 'macOS',
+          url: 'https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-macos',
+          icon: '🍎'
+        };
+      } else if (windowsPlatforms.indexOf(platform) !== -1) {
+        return {
+          name: 'Windows',
+          url: 'https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-windows.exe',
+          icon: '🪟'
+        };
+      } else {
+        return {
+          name: 'Linux',
+          url: 'https://github.com/squirtgunhero/node3/releases/latest/download/node3-agent-linux',
+          icon: '🐧'
+        };
+      }
+    }
+
+    // Fetch latest release info
+    async function loadReleaseInfo() {
+      try {
+        const response = await fetch('https://api.github.com/repos/squirtgunhero/node3/releases/latest');
+        const data = await response.json();
+        
+        // Update version info
+        const totalDownloads = data.assets.reduce((sum, asset) => sum + asset.download_count, 0);
+        const versionInfo = document.getElementById('version-info');
+        versionInfo.innerHTML = `
+          <span class="version-badge">${data.tag_name}</span>
+          <span class="download-stats">${totalDownloads.toLocaleString()} downloads</span>
+        `;
+
+        // Update download button
+        const platform = detectPlatform();
+        const downloadBtn = document.getElementById('primary-download');
+        const downloadText = document.getElementById('download-text');
+        
+        downloadBtn.href = platform.url;
+        downloadBtn.style.display = 'block';
+        downloadText.innerHTML = `${platform.icon} Download for ${platform.name}`;
+      } catch (error) {
+        console.error('Error loading release info:', error);
+        
+        // Fallback if API fails
+        const platform = detectPlatform();
+        const downloadBtn = document.getElementById('primary-download');
+        const downloadText = document.getElementById('download-text');
+        
+        downloadBtn.href = platform.url;
+        downloadBtn.style.display = 'block';
+        downloadText.innerHTML = `${platform.icon} Download for ${platform.name}`;
+        
+        const versionInfo = document.getElementById('version-info');
+        versionInfo.innerHTML = `
+          <span class="version-badge">Latest</span>
+          <span class="download-stats">Click to download</span>
+        `;
+      }
+    }
+
+    // Load on page load
+    loadReleaseInfo();
+  </script>
+</body>
+</html>
+
